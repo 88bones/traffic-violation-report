@@ -11,8 +11,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "@/constant/colors";
 import { useState } from "react";
+import { useRouter } from "expo-router";
 
 export default function SignUpScreen() {
+  const router = useRouter();
+
   const [phone, setPhone] = useState<string>("");
 
   const handleChange = (value: string) => {
@@ -29,12 +32,16 @@ export default function SignUpScreen() {
     if (!isValid) return;
 
     console.log("Sending OTP to", fullPhone);
+    router.push({
+      pathname: "/(auth)/verifyotp",
+      params: { phone: fullPhone },
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "android" ? "padding" : "height"}
         style={styles.keyboard}
       >
         <View style={styles.content}>
@@ -64,6 +71,16 @@ export default function SignUpScreen() {
             <Text style={styles.buttonText}>Send Code</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.linkButton}
+          onPress={() => router.push("/")}
+        >
+          <Text style={styles.linkButtonText}>
+            Already have an account?
+            <Text style={styles.linkText}> Sign In</Text>
+          </Text>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -79,11 +96,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.blue,
   },
   keyboard: {
-    flex: 1,
     width: "100%",
   },
   content: {
-    flex: 1,
     justifyContent: "center",
   },
 
@@ -138,5 +153,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.blue,
+  },
+  linkButton: { marginTop: 24, alignItems: "center" },
+  linkButtonText: { color: COLORS.light, fontSize: 14 },
+  linkText: {
+    fontWeight: "bold",
+    textDecorationLine: "underline",
   },
 });
