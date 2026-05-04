@@ -1,4 +1,5 @@
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -9,14 +10,34 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "@/constant/colors";
-import { useRef, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useRef, useState, useCallback, useEffect } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 export default function VerifyOtp() {
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, otpNumber } = useLocalSearchParams<{
+    phone: string;
+    otpNumber: string;
+  }>();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    console.log("Your code is: ", otpNumber);
+  }, [otpNumber]);
 
   const [otp, setOtp] = useState<string>("");
   const inputRef = useRef<TextInput>(null);
+
+  const handleVerify = () => {
+    if (otp == otpNumber.toString()) {
+      router.replace({
+        pathname: "/(auth)/onBoarding",
+        params: { phone: phone },
+      });
+    } else {
+      Alert.alert("Error", "OTP could not be verified.");
+    }
+  };
 
   return (
     <SafeAreaView style={styles.content}>
@@ -62,7 +83,7 @@ export default function VerifyOtp() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handleVerify}>
           <Text style={styles.buttonText}>Verify</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>

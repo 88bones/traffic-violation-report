@@ -28,13 +28,15 @@ export default function SignUpScreen() {
   const isValid = phone.length === 10;
   const fullPhone = "+977" + phone;
 
+  const otpNumber = Math.floor(1000 + Math.random() * 9000);
+
   const handleSubmit = () => {
     if (!isValid) return;
 
     console.log("Sending OTP to", fullPhone);
     router.push({
       pathname: "/(auth)/verifyotp",
-      params: { phone: fullPhone },
+      params: { phone: fullPhone, otpNumber: otpNumber },
     });
   };
 

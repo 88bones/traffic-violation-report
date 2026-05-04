@@ -1,0 +1,132 @@
+import { COLORS } from "@/constant/colors";
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+interface OnBoardingProps {
+  phone: string;
+  name: string;
+  email: string;
+  password: string;
+}
+
+export default function OnBoardingScreen() {
+  const { phone: paramPhone } = useLocalSearchParams<{ phone: string }>();
+
+  const [data, setData] = useState<OnBoardingProps>({
+    phone: paramPhone,
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = () => {};
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "android" ? "padding" : "height"}
+        style={styles.keyboard}
+      >
+        <Text style={styles.header}>Complete Your Profile.</Text>
+
+        <View style={styles.form}>
+          <TextInput
+            style={styles.input}
+            placeholder="John Doe"
+            autoCapitalize="words"
+            placeholderTextColor={COLORS.dark}
+            value={data.name}
+            onChangeText={(text) => handleChange("name", text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="johndoe@example.com"
+            placeholderTextColor={COLORS.dark}
+            keyboardType="email-address"
+            autoComplete="email"
+            autoCapitalize="none"
+            value={data.email}
+            onChangeText={(text) => handleChange("email", text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor={COLORS.dark}
+            autoComplete="password"
+            secureTextEntry
+            autoCapitalize="none"
+            value={data.password}
+            onChangeText={(text) => handleChange("password", text)}
+          />
+          <TextInput readOnly value={paramPhone} style={styles.input} />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Complete Setup</Text>
+        </TouchableOpacity>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingLeft: 16,
+    paddingRight: 16,
+    width: "100%",
+    backgroundColor: COLORS.blue,
+  },
+  keyboard: {
+    width: "100%",
+  },
+  header: {
+    fontSize: 24,
+    color: COLORS.light,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 18,
+  },
+  form: {
+    justifyContent: "center",
+    width: "100%",
+    backgroundColor: COLORS.light,
+    borderRadius: 12,
+    padding: 12,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: COLORS.darkblue,
+    padding: 16,
+    marginBottom: 8,
+  },
+  button: {
+    backgroundColor: COLORS.light,
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.blue,
+  },
+});
