@@ -2,6 +2,7 @@ import { COLORS } from "@/constant/colors";
 import { useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -29,11 +30,26 @@ export default function OnBoardingScreen() {
     password: "",
   });
 
+  const [error, setError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const handleChange = (field: string, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {};
+  const handleSubmit = () => {
+    if (!data.name || !data.email || !data.password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (data.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setError("");
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -44,6 +60,7 @@ export default function OnBoardingScreen() {
         <Text style={styles.header}>Complete Your Profile.</Text>
 
         <View style={styles.form}>
+          <Text style={styles.label}>Name*</Text>
           <TextInput
             style={styles.input}
             placeholder="John Doe"
@@ -52,6 +69,7 @@ export default function OnBoardingScreen() {
             value={data.name}
             onChangeText={(text) => handleChange("name", text)}
           />
+          <Text style={styles.label}>Email*</Text>
           <TextInput
             style={styles.input}
             placeholder="johndoe@example.com"
@@ -62,6 +80,7 @@ export default function OnBoardingScreen() {
             value={data.email}
             onChangeText={(text) => handleChange("email", text)}
           />
+          <Text style={styles.label}>Password*</Text>
           <TextInput
             style={styles.input}
             placeholder="Password"
@@ -72,11 +91,17 @@ export default function OnBoardingScreen() {
             value={data.password}
             onChangeText={(text) => handleChange("password", text)}
           />
+          <Text style={styles.label}>Phone Number*</Text>
           <TextInput readOnly value={paramPhone} style={styles.input} />
+          {error && <Text style={styles.error}>{error}</Text>}
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Complete Setup</Text>
+          {isLoading ? (
+            <ActivityIndicator size={24} color={COLORS.blue} />
+          ) : (
+            <Text style={styles.buttonText}>Complete Setup</Text>
+          )}
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -116,6 +141,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.darkblue,
     padding: 16,
     marginBottom: 8,
+    color: COLORS.blue,
   },
   button: {
     backgroundColor: COLORS.light,
@@ -128,5 +154,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.blue,
+  },
+  error: {
+    color: "red",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  label: {
+    fontSize: 14,
+    color: COLORS.blue,
+    fontWeight: "600",
+    lineHeight: 16,
+    paddingBottom: 2,
   },
 });

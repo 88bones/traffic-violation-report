@@ -42,7 +42,7 @@ export default function VerifyOtp() {
   return (
     <SafeAreaView style={styles.content}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "android" ? "padding" : "height"}
         style={styles.keyboard}
       >
         <View style={styles.header}>
