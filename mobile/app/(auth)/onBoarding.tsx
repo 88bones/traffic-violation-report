@@ -1,5 +1,6 @@
 import { COLORS } from "@/constant/colors";
-import { useLocalSearchParams } from "expo-router";
+import { signUp } from "@/services/authService";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -12,18 +13,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-interface OnBoardingProps {
-  phone: string;
-  name: string;
-  email: string;
-  password: string;
-}
+import { User } from "../../types/types";
 
 export default function OnBoardingScreen() {
+  const router = useRouter();
   const { phone: paramPhone } = useLocalSearchParams<{ phone: string }>();
 
-  const [data, setData] = useState<OnBoardingProps>({
+  const [data, setData] = useState<User>({
     phone: paramPhone,
     name: "",
     email: "",
@@ -37,7 +33,7 @@ export default function OnBoardingScreen() {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!data.name || !data.email || !data.password) {
       setError("Please fill in all fields.");
       return;
@@ -48,7 +44,23 @@ export default function OnBoardingScreen() {
       return;
     }
 
-    setError("");
+    try {
+      setIsLoading(true);
+      setError("");
+
+      const response = await signUp(data);
+      console.log("Signup successful:", response);
+      // router.push("/(tabs)");
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      const errorMessage =
+        err?.response?.data?.message ||
+        err?.message ||
+        "An error occurred. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
