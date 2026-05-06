@@ -1,36 +1,31 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Provider } from "react-redux";
 import { store } from "../redux/store";
+import { useAppSelector } from "@/redux/hooks";
 
 function RouteGuard() {
   const router = useRouter();
-
-  const [user, setUser] = useState<boolean | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const { user, token, isLoading } = useAppSelector((state) => state.auth);
+  const segments = useSegments();
+  const [mounted, setMounted] = useState(false); // ← add this
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = await AsyncStorage.getItem("authToken");
-        setUser(!!token);
-      } catch (err) {
-        setUser(false);
-      }
-      setIsReady(true);
-    };
-
-    checkAuth();
+    setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!mounted || isLoading) return;
 
-    if (!user) {
+    const inAuthGroup = segments[0] === "(auth)";
+    const inTabsGroup = segments[0] === "(tabs)";
+
+    if (!user && !token && !inAuthGroup) {
       router.replace("/(auth)/signin");
+    } else if (user && token && !inTabsGroup) {
+      router.replace("/(tabs)");
     }
-  }, [isReady, user, router]);
+  }, [mounted, user, token, isLoading, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
