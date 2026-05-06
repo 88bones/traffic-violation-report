@@ -6,3 +6,10 @@ export interface User {
   //   role: string;
   token?: string;
 }
+
+export interface AuthState {
+  token: string | null;
+  user: User | null;
+  isLoading?: boolean;
+  error?: string | null;
+}
