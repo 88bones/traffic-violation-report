@@ -1,21 +1,28 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { Provider } from "react-redux";
-import { store } from "../redux/store";
+import { presistor, store } from "../redux/store";
 import { useAppSelector } from "@/redux/hooks";
+import { PersistGate } from "redux-persist/integration/react";
+import { ActivityIndicator } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 function RouteGuard() {
   const router = useRouter();
-  const { user, token, isLoading } = useAppSelector((state) => state.auth);
   const segments = useSegments();
-  const [mounted, setMounted] = useState(false); // ← add this
+  const [mounted, setMounted] = useState(false);
+
+  const { user, token, isLoading } = useAppSelector((state) => state.auth);
+  const isRehydrated = useAppSelector(
+    (state) => state.auth._persist?.rehydrated,
+  );
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!mounted || isLoading) return;
+    if (!mounted || isLoading || isRehydrated) return;
 
     const inAuthGroup = segments[0] === "(auth)";
     const inTabsGroup = segments[0] === "(tabs)";
@@ -25,7 +32,7 @@ function RouteGuard() {
     } else if (user && token && !inTabsGroup) {
       router.replace("/(tabs)");
     }
-  }, [mounted, user, token, isLoading, segments]);
+  }, [mounted, user, token, isLoading, segments, isRehydrated]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -37,8 +44,12 @@ function RouteGuard() {
 
 export default function RootLayout() {
   return (
-    <Provider store={store}>
-      <RouteGuard />
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <PersistGate loading={<ActivityIndicator />} persistor={presistor}>
+          <RouteGuard />
+        </PersistGate>
+      </Provider>
+    </GestureHandlerRootView>
   );
 }
