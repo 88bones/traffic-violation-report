@@ -16,3 +16,20 @@ export interface AuthState {
     rehydrated: boolean;
   };
 }
+
+export enum Violation {
+  Speeding = "speeding",
+  RunningRedLight = "running_red_light",
+  DrunkDriving = "drunk_driving",
+  RecklessDriving = "reckless_driving",
+}
+
+export interface Post {
+  id: string;
+  image: string;
+  violation: Violation;
+  description: string;
+  location: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
+}
