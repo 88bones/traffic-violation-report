@@ -21,7 +21,7 @@ export default function TabsLayout() {
           headerShown: true,
           headerStyle: { backgroundColor: COLORS.light },
           headerTintColor: COLORS.darkblue,
-          headerTitleStyle: { fontWeight: "semibold" },
+          headerTitleStyle: { fontWeight: "600" },
           headerShadowVisible: false,
         }}
       />

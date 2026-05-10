@@ -1,5 +1,6 @@
 import { Request } from "express";
 
+// users
 export interface IUser {
   id: string;
   name: string;
@@ -16,4 +17,28 @@ export interface AuthRequest extends Request {
     id: string;
     email?: string;
   };
+}
+
+//report
+export enum Violation {
+  Speeding = "speeding",
+  RunningRedLight = "running_red_light",
+  DrunkDriving = "drunk_driving",
+  RecklessDriving = "reckless_driving",
+}
+
+export interface ILocation {
+  latitude: number;
+  longitude: number;
+}
+
+export interface IReport {
+  id: string;
+  image: string;
+  number_plate: string;
+  violation: Violation;
+  description: string;
+  location: ILocation;
+  status: "pending" | "approved" | "rejected";
+  createdAt: string;
 }
