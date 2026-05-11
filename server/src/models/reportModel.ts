@@ -30,6 +30,7 @@ const reportSchema: Schema<ReportDocument> = new Schema({
     trim: true,
   },
   location: {
+    name: { type: String, trim: true },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
   },
