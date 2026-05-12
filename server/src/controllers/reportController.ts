@@ -10,14 +10,14 @@ const createReport = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const imagePath = req.file.path; // ← path to saved image
+    const imagePath = req.file.path;
 
     const newReport = new Report({
-      image: imagePath, // ← save path to db
+      image: imagePath,
       number_plate,
       violation,
       description,
-      location: JSON.parse(location), // ← parse since FormData sends strings
+      location: JSON.parse(location),
       status: "pending",
     });
 

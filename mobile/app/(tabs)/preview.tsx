@@ -1,5 +1,5 @@
 import { COLORS } from "@/constant/colors";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
   Image,
@@ -12,12 +12,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Violation } from "@/types/types";
+import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MapView, { Marker, Region } from "react-native-maps";
 import { searchLocation } from "@/services/locationSearchService";
+import { useAppSelector } from "@/redux/hooks";
+import { createReport } from "@/services/reportService";
 
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
@@ -42,20 +45,27 @@ const NEPAL_BOUNDS = {
 
 export default function PreviewScreen() {
   const { image } = useLocalSearchParams<{ image: string }>();
+  const { token } = useAppSelector((state) => state.auth);
+
   const [isExpanded, setIsExpanded] = useState(false);
   const [selected, setSelected] = useState<Violation | null>(null);
-  const [description, setDescription] = useState("");
+
   const [mapView, setMapView] = useState<boolean>(false);
-  const [pin, setPin] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
   const [search, setSearch] = useState<string>("");
   const [results, setResults] = useState<any[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const [description, setDescription] = useState("");
+  const [numberPlate, setNumberPlate] = useState("");
+  const [locationName, setLocationName] = useState("");
+  const [pin, setPin] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
   const mapRef = useRef<MapView>(null);
+  const router = useRouter();
 
   const onRegionChangeComplete = (region: Region) => {
     const isOutside =
@@ -96,6 +106,7 @@ export default function PreviewScreen() {
     const lng = parseFloat(item.lon);
 
     setPin({ latitude: lat, longitude: lng });
+    setLocationName(item.display_name);
     mapRef.current?.animateToRegion(
       {
         latitude: lat,
@@ -112,7 +123,44 @@ export default function PreviewScreen() {
   };
 
   // submit
-  const handleSubmit = () => {};
+  const handleSubmit = async () => {
+    if (!numberPlate || !selected || !description || !pin || !image) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+
+      const formData = new FormData();
+      formData.append("number_plate", numberPlate);
+      formData.append("violation", selected);
+      formData.append("description", description);
+      formData.append(
+        "location",
+        JSON.stringify({
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+          name: locationName,
+        }),
+      );
+      formData.append("image", {
+        uri: image,
+        name: "report.jpg",
+        type: "image/jpeg",
+      } as any);
+
+      await createReport(formData as any, token!);
+      Alert.alert("Success", "Report submitted successfully.");
+      router.replace("/(tabs)");
+    } catch (err: any) {
+      Alert.alert(
+        "Error",
+        err?.response?.data?.message || "Something went wrong.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -133,6 +181,8 @@ export default function PreviewScreen() {
             style={styles.input}
             placeholder="Number Plate"
             placeholderTextColor={COLORS.darkblue}
+            value={numberPlate}
+            onChangeText={setNumberPlate}
           />
 
           {/* Dropdown */}
@@ -185,7 +235,7 @@ export default function PreviewScreen() {
               placeholder="Search for location"
               placeholderTextColor={COLORS.darkblue}
               value={search}
-              onChangeText={handleSearch} // ← search as user types
+              onChangeText={handleSearch}
             />
           </View>
 

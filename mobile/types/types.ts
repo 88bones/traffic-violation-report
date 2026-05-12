@@ -24,12 +24,18 @@ export enum Violation {
   RecklessDriving = "reckless_driving",
 }
 
-export interface Post {
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
+export interface Report {
   id: string;
   image: string;
+  number_plate: string;
   violation: Violation;
   description: string;
-  location: string;
+  location: Location;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
 }
