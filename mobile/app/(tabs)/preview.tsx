@@ -22,6 +22,7 @@ import { searchLocation } from "@/services/locationSearchService";
 import { useAppSelector } from "@/redux/hooks";
 import { createReport } from "@/services/reportService";
 
+
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
   { label: "Running Red Light", value: Violation.RunningRedLight },
@@ -65,7 +66,10 @@ export default function PreviewScreen() {
   } | null>(null);
 
   const mapRef = useRef<MapView>(null);
+
   const router = useRouter();
+
+ 
 
   const onRegionChangeComplete = (region: Region) => {
     const isOutside =

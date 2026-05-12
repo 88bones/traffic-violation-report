@@ -1,5 +1,10 @@
 import { useAppSelector } from "@/redux/hooks";
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import {
+  CameraView,
+  CameraType,
+  useCameraPermissions,
+  FocusMode,
+} from "expo-camera";
 import { useRef, useState } from "react";
 import {
   Alert,
@@ -27,7 +32,9 @@ export default function Index() {
   const [permission, requestPermission] = useCameraPermissions();
   const [zoom, setZoom] = useState(0);
   const [image, setImage] = useState<string | null>(null);
+  const [focusPoint, setFocusPoint] = useState<{ x: number; y: number }>();
   const lastZoom = useRef(0);
+  const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
     // Camera permissions are still loading
@@ -57,9 +64,33 @@ export default function Index() {
     lastZoom.current = newZoom;
   };
 
+  //ontap focus
+  const handleTapFocus = (e: any) => {
+    const { X, Y } = e.nativeEvent;
+    setFocusPoint({ x: X, y: Y });
+  };
+
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
+
+  //take picture
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      const options = {
+        shutterSound: false,
+        quality: 0.8,
+      };
+
+      const photo = await cameraRef.current.takePictureAsync(options);
+      if (photo?.uri) {
+        router.push({
+          pathname: "/preview",
+          params: { image: photo.uri },
+        });
+      }
+    }
+  };
 
   //image picker
   const pickImage = async () => {
@@ -96,14 +127,17 @@ export default function Index() {
           style={styles.camera}
           facing={facing}
           autofocus="on"
-          ratio="4:3"
+          ratio="16:9"
           zoom={zoom}
+          focusable={true}
+          ref={cameraRef}
+          onTouchEnd={handleTapFocus}
         />
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
             <MaterialIcons name="cameraswitch" size={48} color={"white"} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={takePicture}>
             <Fontisto name="record" size={58} color={"white"} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={pickImage}>
