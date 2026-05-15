@@ -43,7 +43,7 @@ export default function SignInScreen() {
       const response = await signin(data);
       dispatch(setCredentials({ user: response.User, token: response.token }));
 
-      router.replace("/(tabs)");
+      router.replace("/(camera)");
     } catch (err: any) {
       console.error("Signup error:", err);
       const errorMessage =

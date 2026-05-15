@@ -1,9 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-
-interface AuthRequest extends Request {
-  user?: { id: string };
-}
+import { AuthRequest } from "../types/model.types.js";
 
 const authMiddleware = (
   req: AuthRequest,
@@ -18,10 +15,17 @@ const authMiddleware = (
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret") as {
-      id: string;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      userId?: string;
+      user?: string;
     };
-    req.user = { id: decoded.id };
+
+    const userId = decoded.userId || decoded.user;
+    if (!userId) {
+      res.status(401).json({ message: "Invalid token payload" });
+      return;
+    }
+    req.user = { id: userId };
     next();
   } catch (err) {
     res.status(401).json({ message: "Invalid or expired token" });

@@ -1,4 +1,5 @@
 import { Request } from "express";
+import mongoose from "mongoose";
 
 // users
 export interface IUser {
@@ -15,7 +16,6 @@ export interface IUser {
 export interface AuthRequest extends Request {
   user?: {
     id: string;
-    email?: string;
   };
 }
 
@@ -28,6 +28,7 @@ export enum Violation {
 }
 
 export interface ILocation {
+  name?: string;
   latitude: number;
   longitude: number;
 }
@@ -40,5 +41,6 @@ export interface IReport {
   description: string;
   location: ILocation;
   status: "pending" | "approved" | "rejected";
+  reportedBy: mongoose.Types.ObjectId;
   createdAt: string;
 }

@@ -25,6 +25,7 @@ function RouteGuard() {
     if (!mounted || isLoading || isRehydrated) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    // const inCameraGroup = segments[0] === "(camera)";
     const inTabsGroup = segments[0] === "(tabs)";
 
     if (!user && !token && !inAuthGroup) {
@@ -38,6 +39,7 @@ function RouteGuard() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(camera)" />
     </Stack>
   );
 }

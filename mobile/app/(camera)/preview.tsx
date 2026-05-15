@@ -21,7 +21,7 @@ import MapView, { Marker, Region } from "react-native-maps";
 import { searchLocation } from "@/services/locationSearchService";
 import { useAppSelector } from "@/redux/hooks";
 import { createReport } from "@/services/reportService";
-
+import API_BASE_URL from "@/config/apiConfig";
 
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
@@ -68,8 +68,6 @@ export default function PreviewScreen() {
   const mapRef = useRef<MapView>(null);
 
   const router = useRouter();
-
- 
 
   const onRegionChangeComplete = (region: Region) => {
     const isOutside =
@@ -134,6 +132,8 @@ export default function PreviewScreen() {
     }
     try {
       setIsLoading(true);
+      const test = await fetch(`${API_BASE_URL}/api/reports`);
+      console.log("Server reachable:", test.status);
 
       const formData = new FormData();
       formData.append("number_plate", numberPlate);
@@ -155,12 +155,13 @@ export default function PreviewScreen() {
 
       await createReport(formData as any, token!);
       Alert.alert("Success", "Report submitted successfully.");
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/home");
     } catch (err: any) {
       Alert.alert(
         "Error",
         err?.response?.data?.message || "Something went wrong.",
       );
+      console.log(err);
     } finally {
       setIsLoading(false);
     }
@@ -173,7 +174,7 @@ export default function PreviewScreen() {
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled" // ← allows tapping results while keyboard is open
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.imageContainer}>

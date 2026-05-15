@@ -1,16 +1,22 @@
-import axios from "axios";
-import API_BASE_URL from "../config/apiConfig";
-import { Report } from "../types/types";
+import API_BASE_URL from "@/config/apiConfig";
 
 export const createReport = async (formData: FormData, token: string) => {
   try {
-    const res = await axios.post(`${API_BASE_URL}/api/reports`, formData, {
+    const response = await fetch(`${API_BASE_URL}/api/reports`, {
+      method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
       },
+      body: formData,
     });
-    return res.data;
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Something went wrong.");
+    }
+
+    return data;
   } catch (error) {
     throw error;
   }

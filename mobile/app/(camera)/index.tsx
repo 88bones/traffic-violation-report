@@ -22,10 +22,9 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 export default function Index() {
-  const { user, token } = useAppSelector((state) => state.auth);
-
   const router = useRouter();
 
   const [facing, setFacing] = useState<CameraType>("back");
@@ -127,7 +126,7 @@ export default function Index() {
           style={styles.camera}
           facing={facing}
           autofocus="on"
-          ratio="16:9"
+          ratio="4:3"
           zoom={zoom}
           focusable={true}
           ref={cameraRef}
@@ -142,6 +141,12 @@ export default function Index() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.button} onPress={pickImage}>
             <MaterialIcons name="photo-library" size={48} color={"white"} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.dashboard}>
+          <TouchableOpacity onPress={() => router.push("/(tabs)/home")}>
+            <FontAwesome name="home" size={32} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -173,5 +178,12 @@ const styles = StyleSheet.create({
   button: {
     flex: 1,
     alignItems: "center",
+  },
+  dashboard: {
+    position: "absolute",
+    top: 64,
+    right: 0,
+    backgroundColor: "transparent",
+    padding: 16,
   },
 });
