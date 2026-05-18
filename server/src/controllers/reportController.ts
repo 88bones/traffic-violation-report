@@ -18,7 +18,7 @@ const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const imagePath = req.file.path;
+    const imagePath = `uploads/${req.file.filename}`;
 
     const newReport = new Report({
       image: imagePath,
@@ -45,6 +45,11 @@ const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
 const getReports = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+
+    if (!userId) {
+      res.status(401).json({ message: "User ID is required." });
+      return;
+    }
 
     const reports = await Report.find({ reportedBy: userId });
     res.status(200).json({ reports });

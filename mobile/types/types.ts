@@ -25,12 +25,13 @@ export enum Violation {
 }
 
 interface Location {
+  name: string;
   latitude: number;
   longitude: number;
 }
 
 export interface Report {
-  id: string;
+  _id: string;
   image: string;
   number_plate: string;
   violation: Violation;
@@ -38,4 +39,5 @@ export interface Report {
   location: Location;
   status: "pending" | "approved" | "rejected";
   createdAt: string;
+  updatedAt: string;
 }

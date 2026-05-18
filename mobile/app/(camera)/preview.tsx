@@ -90,7 +90,6 @@ export default function PreviewScreen() {
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    // ← wait 500ms after user stops typing before searching
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await searchLocation(query);
@@ -132,8 +131,9 @@ export default function PreviewScreen() {
     }
     try {
       setIsLoading(true);
-      const test = await fetch(`${API_BASE_URL}/api/reports`);
-      console.log("Server reachable:", test.status);
+
+      // const test = await fetch(`${API_BASE_URL}/api/reports`);
+      // console.log("Server reachable:", test.status);
 
       const formData = new FormData();
       formData.append("number_plate", numberPlate);
