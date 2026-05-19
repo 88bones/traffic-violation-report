@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
   View,
@@ -80,6 +81,7 @@ export default function ReportScreen() {
   const { token } = useAppSelector((state) => state.auth);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     fetchReports();
@@ -111,6 +113,11 @@ export default function ReportScreen() {
           keyExtractor={(item) => item._id}
         />
       )}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+      ></Modal>
     </SafeAreaView>
   );
 }

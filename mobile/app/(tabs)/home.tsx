@@ -8,6 +8,10 @@ export default function HomeScreen() {
   const { user } = useAppSelector((state) => state.auth);
   console.log(user);
 
+  // const fetchReportLengths=async()=>{
+  //   setIsL
+  // }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
