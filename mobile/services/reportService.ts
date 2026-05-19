@@ -43,3 +43,27 @@ export const getReports = async (token: string): Promise<Report[]> => {
     throw error;
   }
 };
+
+export const getReport = async (
+  token: string,
+  reportId: string,
+): Promise<Report[]> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Something went wrong.");
+    }
+
+    return data.report;
+  } catch (error) {
+    throw error;
+  }
+};

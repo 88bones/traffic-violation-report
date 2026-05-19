@@ -1,6 +1,6 @@
 import { COLORS } from "@/constant/colors";
 import { useAppSelector } from "@/redux/hooks";
-import { getReports } from "@/services/reportService";
+import { getReport, getReports } from "@/services/reportService";
 import { Report, Violation } from "@/types/types";
 import { useEffect, useState } from "react";
 import {
@@ -11,6 +11,7 @@ import {
   Modal,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -30,62 +31,65 @@ const statusStyle = (status: string) => {
   }
 };
 
-const Item = ({ item }: { item: Report }) => (
-  <View style={styles.card}>
-    <View style={styles.cardTop}>
-      <Image
-        source={{ uri: `${API_BASE_URL}/${item.image}` }}
-        style={styles.image}
-      />
-      <View style={styles.info}>
-        <View style={styles.row}>
-          <Text style={styles.plate}>{item.number_plate}</Text>
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: statusStyle(item.status).bg },
-            ]}
-          >
-            <Text
+const Item = ({ item, onPress }: { item: Report; onPress: () => void }) => (
+  <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
+    <View style={styles.card}>
+      <View style={styles.cardTop}>
+        <Image
+          source={{ uri: `${API_BASE_URL}/${item.image}` }}
+          style={styles.image}
+        />
+        <View style={styles.info}>
+          <View style={styles.row}>
+            <Text style={styles.plate}>{item.number_plate}</Text>
+            <View
               style={[
-                styles.badgeText,
-                { color: statusStyle(item.status).color },
+                styles.badge,
+                { backgroundColor: statusStyle(item.status).bg },
               ]}
             >
-              {item.status}
-            </Text>
+              <Text
+                style={[
+                  styles.badgeText,
+                  { color: statusStyle(item.status).color },
+                ]}
+              >
+                {item.status}
+              </Text>
+            </View>
           </View>
+          <Text style={styles.violation}>
+            <Feather name="alert-triangle" size={14} color="#a3081a" />{" "}
+            {item.violation.replace(/_/g, " ")}
+          </Text>
+          <Text style={styles.location} numberOfLines={1}>
+            <FontAwesome6 name="location-pin" size={14} color="black" />{" "}
+            {item.location?.name ?? "Unknown"}
+          </Text>
+          <Text style={styles.date}>
+            <Fontisto name="date" size={14} color="gray" />{" "}
+            {new Date(item.createdAt).toLocaleDateString()}
+          </Text>
         </View>
-        <Text style={styles.violation}>
-          <Feather name="alert-triangle" size={14} color="#a3081a" />{" "}
-          {item.violation.replace(/_/g, " ")}
-        </Text>
-        <Text style={styles.location} numberOfLines={1}>
-          <FontAwesome6 name="location-pin" size={14} color="black" />{" "}
-          {item.location?.name ?? "Unknown"}
-        </Text>
-        <Text style={styles.date}>
-          <Fontisto name="date" size={14} color="gray" />{" "}
-          {new Date(item.createdAt).toLocaleDateString()}
-        </Text>
       </View>
+      <View style={styles.divider} />
+      <Text style={styles.description} numberOfLines={2}>
+        {item.description}
+      </Text>
     </View>
-    <View style={styles.divider} />
-    <Text style={styles.description} numberOfLines={2}>
-      {item.description}
-    </Text>
-  </View>
+  </TouchableOpacity>
 );
 
 export default function ReportScreen() {
   const { token } = useAppSelector((state) => state.auth);
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
     fetchReports();
-  }, [token]);
+  }, []);
 
   const fetchReports = async () => {
     setIsLoading(true);
@@ -101,6 +105,11 @@ export default function ReportScreen() {
     }
   };
 
+  const handlePress = (item: Report) => {
+    setSelectedReport(item);
+    setModalVisible(true);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>My Reports</Text>
@@ -109,15 +118,28 @@ export default function ReportScreen() {
       ) : (
         <FlatList
           data={reports}
-          renderItem={({ item }) => <Item item={item} />}
+          renderItem={({ item }) => (
+            <Item item={item} onPress={() => handlePress(item)} />
+          )}
           keyExtractor={(item) => item._id}
         />
       )}
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        transparent={true}
-      ></Modal>
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Image
+              source={{ uri: `${API_BASE_URL}/${selectedReport?.image}` }}
+              style={styles.modalImage}
+            />
+            <Text>{selectedReport?.number_plate}</Text>
+            <Text>{selectedReport?.violation}</Text>
+            <Text>{selectedReport?.description}</Text>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -182,4 +204,22 @@ const styles = StyleSheet.create({
   date: { fontSize: 12, color: "#999" },
   divider: { height: 0.5, backgroundColor: "#e0e0e0" },
   description: { fontSize: 13, color: "#666", padding: 10 },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    gap: 12,
+  },
+  modalImage: {
+    width: "100%",
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: "#f0f0f0",
+  },
 });
