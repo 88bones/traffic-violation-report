@@ -6,6 +6,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useEffect } from "react";
 import { setReportLoading, setReports } from "@/redux/reportSlice";
 import { getReports } from "@/services/reportService";
+import ReportCard from "@/components/ReportCard";
 
 export default function HomeScreen() {
   const { user, token } = useAppSelector((state) => state.auth);
@@ -43,14 +44,11 @@ export default function HomeScreen() {
           name="bell-outline"
           size={24}
           color={COLORS.blue}
+          style={styles.notification}
         />
       </View>
 
-      {!isLoading && (
-        <View>
-          <Text>Total Reports: {reports.length}</Text>
-        </View>
-      )}
+      {!isLoading && <ReportCard reports={reports} />}
     </SafeAreaView>
   );
 }
@@ -71,5 +69,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: COLORS.blue,
+  },
+  notification: {
+    backgroundColor: "#fff",
+    padding: 8,
+    borderRadius: 60,
   },
 });
