@@ -12,9 +12,6 @@ export interface AuthState {
   user: User | null;
   isLoading?: boolean;
   error?: string | null;
-  _persist: {
-    rehydrated: boolean;
-  };
 }
 
 export enum Violation {

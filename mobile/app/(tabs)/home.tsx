@@ -10,12 +10,16 @@ import { getReports } from "@/services/reportService";
 export default function HomeScreen() {
   const { user, token } = useAppSelector((state) => state.auth);
   const { reports, isLoading } = useAppSelector((state) => state.reports);
+  const isRehydrated = useAppSelector(
+    (state) => (state.auth as any)._persist?.rehydrated,
+  );
   const dispatch = useAppDispatch();
   console.log(user);
 
   useEffect(() => {
+    if (!isRehydrated || !token) return;
     fetchReports();
-  }, []);
+  }, [isRehydrated, token]);
 
   const fetchReports = async () => {
     dispatch(setReportLoading(true));
@@ -42,9 +46,11 @@ export default function HomeScreen() {
         />
       </View>
 
-      <View>
-        <Text>Total Reports: {reports.length}</Text>
-      </View>
+      {!isLoading && (
+        <View>
+          <Text>Total Reports: {reports.length}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
