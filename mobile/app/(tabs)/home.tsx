@@ -1,16 +1,35 @@
 import { COLORS } from "@/constant/colors";
-import { useAppSelector } from "@/redux/hooks";
-import { StyleSheet, Text, View } from "react-native";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useEffect } from "react";
+import { setReportLoading, setReports } from "@/redux/reportSlice";
+import { getReports } from "@/services/reportService";
 
 export default function HomeScreen() {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, token } = useAppSelector((state) => state.auth);
+  const { reports, isLoading } = useAppSelector((state) => state.reports);
+  const dispatch = useAppDispatch();
   console.log(user);
 
-  // const fetchReportLengths=async()=>{
-  //   setIsL
-  // }
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    dispatch(setReportLoading(true));
+    try {
+      const data = await getReports(token!);
+      dispatch(setReports(data));
+      console.log(data);
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+      console.log(err);
+    } finally {
+      dispatch(setReportLoading(false));
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -21,6 +40,10 @@ export default function HomeScreen() {
           size={24}
           color={COLORS.blue}
         />
+      </View>
+
+      <View>
+        <Text>Total Reports: {reports.length}</Text>
       </View>
     </SafeAreaView>
   );

@@ -1,8 +1,6 @@
 import { COLORS } from "@/constant/colors";
-import { useAppSelector } from "@/redux/hooks";
-import { getReport, getReports } from "@/services/reportService";
-import { Report, Violation } from "@/types/types";
-import { useEffect, useState } from "react";
+import { Report } from "@/types/types";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +17,7 @@ import API_BASE_URL from "@/config/apiConfig";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
+import { useAppSelector } from "@/redux/hooks";
 
 const statusStyle = (status: string) => {
   switch (status) {
@@ -81,29 +80,9 @@ const Item = ({ item, onPress }: { item: Report; onPress: () => void }) => (
 );
 
 export default function ReportScreen() {
-  const { token } = useAppSelector((state) => state.auth);
-  const [reports, setReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { reports, isLoading } = useAppSelector((state) => state.reports);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
-  const fetchReports = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getReports(token!);
-      setReports(data);
-      console.log(data);
-    } catch (err: any) {
-      Alert.alert("Error", err.message);
-      console.log(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handlePress = (item: Report) => {
     setSelectedReport(item);

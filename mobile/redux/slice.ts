@@ -6,6 +6,9 @@ const initialState: AuthState = {
   user: null,
   isLoading: false,
   error: null,
+  _persist: {
+    rehydrated: false,
+  },
 };
 
 const authSlice = createSlice({
