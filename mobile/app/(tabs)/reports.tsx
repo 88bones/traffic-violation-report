@@ -133,25 +133,100 @@ export default function ReportScreen() {
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <TouchableOpacity
-              style={styles.cross}
-              onPress={() => setModalVisible(false)}
-            >
-              <Ionicons name="close" size={28} color="#c70202" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.trash}
-              onPress={() => handleDelete(selectedReport?._id!)}
-            >
-              <Ionicons name="trash" size={28} color="#008f0a" />
-            </TouchableOpacity>
-            <Image
-              source={{ uri: `${API_BASE_URL}/${selectedReport?.image}` }}
-              style={styles.modalImage}
-            />
-            <Text>{selectedReport?.number_plate}</Text>
-            <Text>{selectedReport?.violation}</Text>
-            <Text>{selectedReport?.description}</Text>
+            {/* Image with overlay buttons */}
+            <View style={styles.imageWrapper}>
+              <Image
+                source={{ uri: `${API_BASE_URL}/${selectedReport?.image}` }}
+                style={styles.modalImage}
+              />
+              <View style={styles.overlay} />
+
+              {/* Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Ionicons name="close" size={20} color="#c70202" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => handleDelete(selectedReport?._id!)}
+                >
+                  <Ionicons name="trash" size={20} color="#c70202" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Status badge on image */}
+              <View style={styles.imageBadgeWrapper}>
+                <View
+                  style={[
+                    styles.badge,
+                    {
+                      backgroundColor: statusStyle(
+                        selectedReport?.status ?? "pending",
+                      ).background,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      {
+                        color: statusStyle(selectedReport?.status ?? "pending")
+                          .text,
+                      },
+                    ]}
+                  >
+                    {selectedReport?.status}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.modalBody}>
+              {/* Number plate */}
+              <View style={styles.plateContainer}>
+                <Text style={styles.plateLabel}>Number Plate</Text>
+                <Text style={styles.plateText}>
+                  {selectedReport?.number_plate}
+                </Text>
+              </View>
+
+              {/* Violation + Date row */}
+              <View style={styles.infoRow}>
+                <View style={styles.infoBox}>
+                  <Text style={styles.label}>Violation</Text>
+                  <Text style={styles.infoText}>
+                    {selectedReport?.violation?.replace(/_/g, " ")}
+                  </Text>
+                </View>
+                <View style={styles.infoBox}>
+                  <Text style={styles.label}>Date</Text>
+                  <Text style={styles.infoText}>
+                    {selectedReport
+                      ? new Date(selectedReport.createdAt).toLocaleDateString()
+                      : ""}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Location */}
+              <View style={styles.infoBoxFull}>
+                <Text style={styles.label}>Location</Text>
+                <Text style={styles.infoText}>
+                  {selectedReport?.location?.name ?? "Unknown"}
+                </Text>
+              </View>
+
+              {/* Description */}
+              <View style={styles.infoBoxFull}>
+                <Text style={styles.label}>Description</Text>
+                <Text style={styles.descriptionText}>
+                  {selectedReport?.description}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
@@ -226,35 +301,95 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    gap: 12,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: "hidden",
+  },
+  imageWrapper: {
+    width: "100%",
+    height: 220,
+    position: "relative",
   },
   modalImage: {
     width: "100%",
-    height: 200,
-    borderRadius: 12,
-    backgroundColor: "#f0f0f0",
+    height: "100%",
   },
-  cross: {
-    alignSelf: "flex-end",
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
-    borderRadius: 50,
-    padding: 4,
+  overlay: {
     position: "absolute",
-    top: 25,
-    right: 25,
-    zIndex: 10,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "transparent",
   },
-  trash: {
-    alignSelf: "flex-end",
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
-    borderRadius: 50,
-    padding: 4,
+  actionButtons: {
     position: "absolute",
-    top: 65,
-    right: 25,
-    zIndex: 10,
+    top: 12,
+    right: 12,
+    gap: 8,
+    flexDirection: "column",
+  },
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  imageBadgeWrapper: {
+    position: "absolute",
+    bottom: 12,
+    left: 12,
+  },
+  modalBody: { padding: 20, gap: 12 },
+  plateContainer: {
+    backgroundColor: "#C50000",
+    borderRadius: 8,
+    padding: 10,
+    alignItems: "center",
+  },
+  plateLabel: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
+  plateText: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#fff",
+    letterSpacing: 2,
+  },
+  infoRow: { flexDirection: "row", gap: 12 },
+  infoBox: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    padding: 12,
+  },
+  infoBoxFull: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 10,
+    padding: 12,
+  },
+  label: {
+    fontSize: 11,
+    color: "gray",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#333",
+    textTransform: "capitalize",
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
   },
 });
