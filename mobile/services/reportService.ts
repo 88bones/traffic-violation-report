@@ -49,7 +49,7 @@ export const getReport = async (
   reportId: string,
 ): Promise<Report[]> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/reports/${reportId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -65,5 +65,26 @@ export const getReport = async (
     return data.report;
   } catch (error) {
     throw error;
+  }
+};
+
+export const deleteReport = async (
+  token: string,
+  reportId: string,
+): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Something went wrong.");
+    }
+  } catch (err) {
+    throw err;
   }
 };

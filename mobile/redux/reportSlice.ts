@@ -26,9 +26,12 @@ const reportSlice = createSlice({
     setReportError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    removeReport: (state, action: PayloadAction<string>) => {
+      state.reports = state.reports.filter((r) => r._id !== action.payload);
+    },
   },
 });
 
-export const { setReports, setReportLoading, setReportError } =
+export const { setReports, setReportLoading, setReportError, removeReport } =
   reportSlice.actions;
 export default reportSlice.reducer;

@@ -18,7 +18,9 @@ import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useAppSelector } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { deleteReport } from "@/services/reportService";
+import { removeReport } from "@/redux/reportSlice";
 
 const statusStyle = (status: string) => {
   switch (status) {
@@ -83,12 +85,35 @@ const Item = ({ item, onPress }: { item: Report; onPress: () => void }) => (
 
 export default function ReportScreen() {
   const { reports, isLoading } = useAppSelector((state) => state.reports);
+  const { token } = useAppSelector((state) => state.auth);
+
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+
+  const dispatch = useAppDispatch();
 
   const handlePress = (item: Report) => {
     setSelectedReport(item);
     setModalVisible(true);
+  };
+
+  const handleDelete = async (reportId: string) => {
+    Alert.alert("Delete Report", "Are you sure?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteReport(token!, reportId);
+            dispatch(removeReport(reportId));
+            setModalVisible(false);
+          } catch (error) {
+            Alert.alert("Error", "Failed to delete report");
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -109,32 +134,14 @@ export default function ReportScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <TouchableOpacity
-              style={{
-                alignSelf: "flex-end",
-                backgroundColor: "rgba(255, 255, 255, 0.5)",
-                borderRadius: 50,
-                padding: 4,
-                position: "absolute",
-                top: 25,
-                right: 25,
-                zIndex: 10,
-              }}
+              style={styles.cross}
               onPress={() => setModalVisible(false)}
             >
               <Ionicons name="close" size={28} color="#c70202" />
             </TouchableOpacity>
             <TouchableOpacity
-              style={{
-                alignSelf: "flex-end",
-                backgroundColor: "rgba(255, 255, 255, 0.5)",
-                borderRadius: 50,
-                padding: 4,
-                position: "absolute",
-                top: 65,
-                right: 25,
-                zIndex: 10,
-              }}
-              // onPress={() => setModalVisible(false)}
+              style={styles.trash}
+              onPress={() => handleDelete(selectedReport?._id!)}
             >
               <Ionicons name="trash" size={28} color="#008f0a" />
             </TouchableOpacity>
@@ -229,5 +236,25 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 12,
     backgroundColor: "#f0f0f0",
+  },
+  cross: {
+    alignSelf: "flex-end",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    borderRadius: 50,
+    padding: 4,
+    position: "absolute",
+    top: 25,
+    right: 25,
+    zIndex: 10,
+  },
+  trash: {
+    alignSelf: "flex-end",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    borderRadius: 50,
+    padding: 4,
+    position: "absolute",
+    top: 65,
+    right: 25,
+    zIndex: 10,
   },
 });

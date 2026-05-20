@@ -14,10 +14,6 @@ router.post("/", authMiddleware, upload.single("image"), createReport);
 
 router.get("/", authMiddleware, getReports);
 router.get("/:reportId", authMiddleware, getReport);
-router.delete(
-  "/:reportId",
-  // authMiddleware,
-  deleteReport,
-);
+router.delete("/:reportId", authMiddleware, deleteReport);
 
 export default router;
