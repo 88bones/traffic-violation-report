@@ -76,4 +76,19 @@ const getReport = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export { createReport, getReports, getReport };
+const deleteReport = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { reportId } = req.params;
+    const report = await Report.findByIdAndDelete(reportId);
+    if (!report) {
+      res.status(404).json({ message: "Report not found" });
+      return;
+    }
+    res.status(200).json({ message: "Report deleted successfully", report });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { createReport, getReports, getReport, deleteReport };

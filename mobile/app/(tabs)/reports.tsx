@@ -1,4 +1,4 @@
-import { COLORS } from "@/constant/colors";
+import { COLORS, StatusColors } from "@/constant/colors";
 import { Report } from "@/types/types";
 import { useState } from "react";
 import {
@@ -17,19 +17,21 @@ import API_BASE_URL from "@/config/apiConfig";
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAppSelector } from "@/redux/hooks";
 
 const statusStyle = (status: string) => {
   switch (status) {
     case "approved":
-      return { bg: "#e6f4ea", color: "#2d6a4f" };
+      return StatusColors.approved;
+
     case "rejected":
-      return { bg: "#fce8e8", color: "#b91c1c" };
+      return StatusColors.rejected;
+
     default:
-      return { bg: "#fef3c7", color: "#92400e" };
+      return StatusColors.pending;
   }
 };
-
 const Item = ({ item, onPress }: { item: Report; onPress: () => void }) => (
   <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
     <View style={styles.card}>
@@ -44,13 +46,13 @@ const Item = ({ item, onPress }: { item: Report; onPress: () => void }) => (
             <View
               style={[
                 styles.badge,
-                { backgroundColor: statusStyle(item.status).bg },
+                { backgroundColor: statusStyle(item.status).background },
               ]}
             >
               <Text
                 style={[
                   styles.badgeText,
-                  { color: statusStyle(item.status).color },
+                  { color: statusStyle(item.status).text },
                 ]}
               >
                 {item.status}
@@ -106,6 +108,36 @@ export default function ReportScreen() {
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={{
+                alignSelf: "flex-end",
+                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                borderRadius: 50,
+                padding: 4,
+                position: "absolute",
+                top: 25,
+                right: 25,
+                zIndex: 10,
+              }}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="close" size={28} color="#c70202" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                alignSelf: "flex-end",
+                backgroundColor: "rgba(255, 255, 255, 0.5)",
+                borderRadius: 50,
+                padding: 4,
+                position: "absolute",
+                top: 65,
+                right: 25,
+                zIndex: 10,
+              }}
+              // onPress={() => setModalVisible(false)}
+            >
+              <Ionicons name="trash" size={28} color="#008f0a" />
+            </TouchableOpacity>
             <Image
               source={{ uri: `${API_BASE_URL}/${selectedReport?.image}` }}
               style={styles.modalImage}
@@ -113,9 +145,6 @@ export default function ReportScreen() {
             <Text>{selectedReport?.number_plate}</Text>
             <Text>{selectedReport?.violation}</Text>
             <Text>{selectedReport?.description}</Text>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text>Close</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
