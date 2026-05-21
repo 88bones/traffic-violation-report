@@ -169,13 +169,12 @@ export default function PreviewScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "android" ? "padding" : undefined}
+      behavior={Platform.OS === "android" ? "padding" : "height"}
       style={styles.keyboard}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
       >
         <View style={styles.imageContainer}>
           <Image source={{ uri: image }} style={styles.image} />
@@ -295,9 +294,12 @@ export default function PreviewScreen() {
 }
 
 const styles = StyleSheet.create({
-  keyboard: { flex: 1, width: "100%", backgroundColor: COLORS.light },
+  keyboard: {
+    flex: 1,
+    width: "100%",
+    backgroundColor: COLORS.light,
+  },
   scrollContent: {
-    flexGrow: 1,
     paddingBottom: 40,
   },
   imageContainer: {

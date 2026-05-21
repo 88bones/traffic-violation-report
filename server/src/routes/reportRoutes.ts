@@ -4,6 +4,7 @@ import {
   getReports,
   getReport,
   deleteReport,
+  updateReport,
 } from "../controllers/reportController.js";
 import upload from "./../middleware/upload.js";
 import authMiddleware from "./../middleware/authMiddleware.js";
@@ -15,5 +16,6 @@ router.post("/", authMiddleware, upload.single("image"), createReport);
 router.get("/", authMiddleware, getReports);
 router.get("/:reportId", authMiddleware, getReport);
 router.delete("/:reportId", authMiddleware, deleteReport);
+router.put("/:reportId", authMiddleware, upload.single("image"), updateReport);
 
 export default router;
