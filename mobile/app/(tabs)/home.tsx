@@ -16,7 +16,6 @@ export default function HomeScreen() {
   );
   const dispatch = useAppDispatch();
   console.log(user);
-  console.log(token);
 
   useEffect(() => {
     if (!isRehydrated || !token) return;

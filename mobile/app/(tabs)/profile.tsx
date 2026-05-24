@@ -8,8 +8,8 @@ export default function ProfileScreen() {
   const router = useRouter();
 
   const handleLogout = () => {
-    dispatch(logout()); // ← clears redux state
-    router.replace("/(auth)/signin"); // ← redirect to signin
+    dispatch(logout());
+    router.replace("/(auth)/signin");
   };
 
   return (

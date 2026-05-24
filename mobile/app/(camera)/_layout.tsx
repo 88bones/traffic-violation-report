@@ -26,6 +26,19 @@ export default function CameraLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="update"
+        options={{
+          title: "Update Report",
+          tabBarStyle: { display: "none" },
+          headerShown: true,
+          headerStyle: { backgroundColor: COLORS.light },
+          headerTintColor: COLORS.darkblue,
+          headerTitleStyle: { fontWeight: "600" },
+          headerShadowVisible: false,
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

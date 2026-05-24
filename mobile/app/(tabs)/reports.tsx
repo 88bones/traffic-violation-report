@@ -21,6 +21,8 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { deleteReport } from "@/services/reportService";
 import { removeReport } from "@/redux/reportSlice";
+import { ComponentProps } from "react";
+import { useRouter } from "expo-router";
 
 const statusStyle = (status: string) => {
   switch (status) {
@@ -91,6 +93,32 @@ export default function ReportScreen() {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const actionButtons = [
+    {
+      id: "close-btn",
+      icon: "close",
+      color: COLORS.blue,
+      onPress: () => setModalVisible(false),
+    },
+    {
+      id: "trash-btn",
+      icon: "trash",
+      color: "#c70202",
+      onPress: () => handleDelete(selectedReport?._id!),
+    },
+    {
+      id: "pencil-btn",
+      icon: "pencil",
+      color: "#02C72D",
+      onPress: () =>
+        router.push({
+          pathname: "/(camera)/update",
+          params: { reportId: selectedReport?._id! },
+        }),
+    },
+  ];
 
   const handlePress = (item: Report) => {
     setSelectedReport(item);
@@ -143,18 +171,19 @@ export default function ReportScreen() {
 
               {/* Buttons */}
               <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.iconBtn}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Ionicons name="close" size={20} color="#c70202" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.iconBtn}
-                  onPress={() => handleDelete(selectedReport?._id!)}
-                >
-                  <Ionicons name="trash" size={20} color="#c70202" />
-                </TouchableOpacity>
+                {actionButtons.map((btn) => (
+                  <TouchableOpacity
+                    key={btn.id}
+                    style={styles.iconBtn}
+                    onPress={btn.onPress}
+                  >
+                    <Ionicons
+                      name={btn.icon as ComponentProps<typeof Ionicons>["name"]}
+                      size={20}
+                      color={btn.color}
+                    />
+                  </TouchableOpacity>
+                ))}
               </View>
 
               {/* Status badge on image */}

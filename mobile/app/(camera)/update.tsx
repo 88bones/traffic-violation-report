@@ -1,3 +1,4 @@
+import { useAppSelector } from "@/redux/hooks";
 import { COLORS } from "@/constant/colors";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
@@ -19,7 +20,6 @@ import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MapView, { Marker, Region } from "react-native-maps";
 import { searchLocation } from "@/services/locationSearchService";
-import { useAppSelector } from "@/redux/hooks";
 import { createReport } from "@/services/reportService";
 import API_BASE_URL from "@/config/apiConfig";
 
@@ -44,128 +44,32 @@ const NEPAL_BOUNDS = {
   maxLng: 88.2,
 };
 
-export default function PreviewScreen() {
-  const { image } = useLocalSearchParams<{ image: string }>();
-  const { token } = useAppSelector((state) => state.auth);
+export default function UpdateScreen() {
+  const { reportId } = useLocalSearchParams<{ reportId: string }>();
+  const report = useAppSelector((state) =>
+    state.reports.reports.find((r) => r._id === reportId),
+  );
+  console.log(report);
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selected, setSelected] = useState<Violation | null>(null);
 
-  const [mapView, setMapView] = useState<boolean>(false);
-  const [search, setSearch] = useState<string>("");
+  const [mapView, setMapView] = useState<boolean>(!!report?.location);
+  const [search, setSearch] = useState<string>(report?.location?.name || "");
   const [results, setResults] = useState<any[]>([]);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  const [description, setDescription] = useState("");
-  const [numberPlate, setNumberPlate] = useState("");
-  const [locationName, setLocationName] = useState("");
+  const [description, setDescription] = useState(report?.description || "");
+  const [numberPlate, setNumberPlate] = useState(report?.number_plate || "");
+  const [location, setLocation] = useState(report?.location?.name || "");
   const [pin, setPin] = useState<{
     latitude: number;
     longitude: number;
-  } | null>(null);
-
-  const mapRef = useRef<MapView>(null);
-
-  const router = useRouter();
-
-  const onRegionChangeComplete = (region: Region) => {
-    const isOutside =
-      region.latitude < NEPAL_BOUNDS.minLat ||
-      region.latitude > NEPAL_BOUNDS.maxLat ||
-      region.longitude < NEPAL_BOUNDS.minLng ||
-      region.longitude > NEPAL_BOUNDS.maxLng;
-
-    if (isOutside) {
-      mapRef.current?.animateToRegion(NEPAL_REGION, 300);
-    }
-  };
-
-  //search location
-  const handleSearch = async (query: string) => {
-    setSearch(query);
-    if (query.length < 3) {
-      setResults([]);
-      return;
-    }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await searchLocation(query);
-        setResults(res);
-      } catch (err: any) {
-        if (err?.response?.status === 429) {
-          console.log("Too many requests, slow down");
-        }
-      }
-    }, 500);
-  };
-  // console.log(results);
-  const selectLocation = (item: any) => {
-    const lat = parseFloat(item.lat);
-    const lng = parseFloat(item.lon);
-
-    setPin({ latitude: lat, longitude: lng });
-    setLocationName(item.display_name);
-    mapRef.current?.animateToRegion(
-      {
-        latitude: lat,
-        longitude: lng,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      },
-      500,
-    );
-
-    setSearch(item.display_name);
-    setResults([]);
-    setMapView(true);
-  };
-
-  // submit
-  const handleSubmit = async () => {
-    if (!numberPlate || !selected || !description || !pin || !image) {
-      Alert.alert("Error", "Please fill in all fields.");
-      return;
-    }
-    try {
-      setIsLoading(true);
-
-      // const test = await fetch(`${API_BASE_URL}/api/reports`);
-      // console.log("Server reachable:", test.status);
-
-      const formData = new FormData();
-      formData.append("number_plate", numberPlate);
-      formData.append("violation", selected);
-      formData.append("description", description);
-      formData.append(
-        "location",
-        JSON.stringify({
-          latitude: pin.latitude,
-          longitude: pin.longitude,
-          name: locationName,
-        }),
-      );
-      formData.append("image", {
-        uri: image,
-        name: "report.jpg",
-        type: "image/jpeg",
-      } as any);
-
-      await createReport(formData as any, token!);
-      Alert.alert("Success", "Report submitted successfully.");
-      router.replace("/(tabs)/home");
-    } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err?.response?.data?.message || "Something went wrong.",
-      );
-      console.log(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }>({
+    latitude: report?.location?.latitude || 0,
+    longitude: report?.location?.longitude || 0,
+  });
+  const [image, setImage] = useState(`${API_BASE_URL}/${report?.image}` || "");
+  const [selected, setSelected] = useState<Violation | null>(
+    (report?.violation as Violation) ?? null,
+  );
 
   return (
     <KeyboardAvoidingView
@@ -239,7 +143,7 @@ export default function PreviewScreen() {
               placeholder="Search for location"
               placeholderTextColor={COLORS.darkblue}
               value={search}
-              onChangeText={handleSearch}
+              //   onChangeText={handleSearch}
             />
           </View>
 
@@ -250,7 +154,7 @@ export default function PreviewScreen() {
                 <TouchableOpacity
                   key={item.place_id}
                   style={styles.resultItem}
-                  onPress={() => selectLocation(item)}
+                  //   onPress={() => selectLocation(item)}
                 >
                   <Text style={styles.resultText} numberOfLines={2}>
                     {item.display_name}
@@ -263,12 +167,12 @@ export default function PreviewScreen() {
           {mapView && (
             <View style={styles.mapContainer}>
               <MapView
-                ref={mapRef}
+                // ref={mapRef}
                 style={styles.map}
                 initialRegion={NEPAL_REGION}
                 minZoomLevel={6}
                 maxZoomLevel={15}
-                onRegionChangeComplete={onRegionChangeComplete}
+                // onRegionChangeComplete={onRegionChangeComplete}
               >
                 {pin && (
                   <Marker
@@ -280,13 +184,13 @@ export default function PreviewScreen() {
               </MapView>
             </View>
           )}
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          {/* <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             {isLoading ? (
               <ActivityIndicator size={24} color={COLORS.blue} />
             ) : (
               <Text style={styles.buttonText}>Submit Report</Text>
             )}
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -88,3 +88,26 @@ export const deleteReport = async (
     throw err;
   }
 };
+
+export const updateReport = async (
+  token: string,
+  reportId: string,
+  formData: FormData,
+): Promise<void> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || "Something went wrong.");
+    }
+  } catch (err) {
+    throw err;
+  }
+};
