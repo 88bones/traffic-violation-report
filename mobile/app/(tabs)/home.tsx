@@ -27,7 +27,7 @@ export default function HomeScreen() {
     try {
       const data = await getReports(token!);
       dispatch(setReports(data));
-      console.log(data);
+      // console.log(data);
     } catch (err: any) {
       Alert.alert("Error", err.message);
       console.log(err);

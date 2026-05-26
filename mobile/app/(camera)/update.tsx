@@ -20,8 +20,10 @@ import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MapView, { Marker, Region } from "react-native-maps";
 import { searchLocation } from "@/services/locationSearchService";
-import { createReport } from "@/services/reportService";
+import { createReport, updateReport } from "@/services/reportService";
 import API_BASE_URL from "@/config/apiConfig";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as ImagePicker from "expo-image-picker";
 
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
@@ -46,11 +48,13 @@ const NEPAL_BOUNDS = {
 
 export default function UpdateScreen() {
   const { reportId } = useLocalSearchParams<{ reportId: string }>();
+  const { token } = useAppSelector((state) => state.auth);
   const report = useAppSelector((state) =>
     state.reports.reports.find((r) => r._id === reportId),
   );
   console.log(report);
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const [mapView, setMapView] = useState<boolean>(!!report?.location);
@@ -58,7 +62,9 @@ export default function UpdateScreen() {
   const [results, setResults] = useState<any[]>([]);
   const [description, setDescription] = useState(report?.description || "");
   const [numberPlate, setNumberPlate] = useState(report?.number_plate || "");
-  const [location, setLocation] = useState(report?.location?.name || "");
+  const [locationName, setLocationName] = useState(
+    report?.location?.name || "",
+  );
   const [pin, setPin] = useState<{
     latitude: number;
     longitude: number;
@@ -71,6 +77,134 @@ export default function UpdateScreen() {
     (report?.violation as Violation) ?? null,
   );
 
+  const router = useRouter();
+
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapRef = useRef<MapView>(null);
+
+  const onRegionChangeComplete = (region: Region) => {
+    const isOutside =
+      region.latitude < NEPAL_BOUNDS.minLat ||
+      region.latitude > NEPAL_BOUNDS.maxLat ||
+      region.longitude < NEPAL_BOUNDS.minLng ||
+      region.longitude > NEPAL_BOUNDS.maxLng;
+
+    if (isOutside) {
+      mapRef.current?.animateToRegion(NEPAL_REGION, 300);
+    }
+  };
+
+  //search location
+  const handleSearch = async (query: string) => {
+    setSearch(query);
+    if (query.length < 3) {
+      setResults([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await searchLocation(query);
+        setResults(res);
+      } catch (err: any) {
+        if (err?.response?.status === 429) {
+          console.log("Too many requests, slow down");
+        }
+      }
+    }, 500);
+  };
+  // console.log(results);
+  const selectLocation = (item: any) => {
+    const lat = parseFloat(item.lat);
+    const lng = parseFloat(item.lon);
+
+    setPin({ latitude: lat, longitude: lng });
+    setLocationName(item.display_name);
+    mapRef.current?.animateToRegion(
+      {
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      },
+      500,
+    );
+
+    setSearch(item.display_name);
+    setResults([]);
+    setMapView(true);
+  };
+
+  // pick Image
+  const pickImage = async () => {
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert(
+        "Permission required",
+        "Permission to access the media library is required.",
+      );
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  // submuit
+  const handleSubmit = async () => {
+    if (!numberPlate || !selected || !description || !pin) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+    try {
+      setIsLoading(true);
+
+      // const test = await fetch(`${API_BASE_URL}/api/reports`);
+      // console.log("Server reachable:", test.status);
+
+      const formData = new FormData();
+      formData.append("number_plate", numberPlate);
+      formData.append("violation", selected);
+      formData.append("description", description);
+      formData.append(
+        "location",
+        JSON.stringify({
+          name: locationName,
+          latitude: pin.latitude,
+          longitude: pin.longitude,
+        }),
+      );
+      formData.append("image", {
+        uri: image,
+        name: "report.jpg",
+        type: "image/jpeg",
+      } as any);
+
+      await updateReport(token!, reportId, formData as any);
+      Alert.alert("Success", "Report updated successfully.");
+      router.replace("/(tabs)/reports");
+    } catch (err: any) {
+      Alert.alert(
+        "Error",
+        err?.response?.data?.message || "Something went wrong.",
+      );
+      console.log(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "android" ? "padding" : "height"}
@@ -82,6 +216,11 @@ export default function UpdateScreen() {
       >
         <View style={styles.imageContainer}>
           <Image source={{ uri: image }} style={styles.image} />
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={styles.editBtn} onPress={pickImage}>
+              <Ionicons name="pencil" size={20} color="#02c72d" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.form}>
@@ -143,7 +282,7 @@ export default function UpdateScreen() {
               placeholder="Search for location"
               placeholderTextColor={COLORS.darkblue}
               value={search}
-              //   onChangeText={handleSearch}
+              onChangeText={handleSearch}
             />
           </View>
 
@@ -154,7 +293,7 @@ export default function UpdateScreen() {
                 <TouchableOpacity
                   key={item.place_id}
                   style={styles.resultItem}
-                  //   onPress={() => selectLocation(item)}
+                  onPress={() => selectLocation(item)}
                 >
                   <Text style={styles.resultText} numberOfLines={2}>
                     {item.display_name}
@@ -167,12 +306,12 @@ export default function UpdateScreen() {
           {mapView && (
             <View style={styles.mapContainer}>
               <MapView
-                // ref={mapRef}
+                ref={mapRef}
                 style={styles.map}
                 initialRegion={NEPAL_REGION}
                 minZoomLevel={6}
                 maxZoomLevel={15}
-                // onRegionChangeComplete={onRegionChangeComplete}
+                onRegionChangeComplete={onRegionChangeComplete}
               >
                 {pin && (
                   <Marker
@@ -184,13 +323,13 @@ export default function UpdateScreen() {
               </MapView>
             </View>
           )}
-          {/* <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
             {isLoading ? (
               <ActivityIndicator size={24} color={COLORS.blue} />
             ) : (
               <Text style={styles.buttonText}>Submit Report</Text>
             )}
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -309,5 +448,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.light,
+  },
+  actionButtons: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    gap: 8,
+    flexDirection: "column",
+  },
+  editBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

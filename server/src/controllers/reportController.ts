@@ -59,9 +59,14 @@ const getReports = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
-const getReport = async (req: Request, res: Response): Promise<void> => {
+const getReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { reportId } = req.params;
+    if (!req.user?.id) {
+      res
+        .status(401)
+        .json({ message: "User not authenticated. Please login again." });
+    }
     const report = await Report.findById(reportId);
 
     if (!report) {
@@ -76,9 +81,14 @@ const getReport = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-const deleteReport = async (req: Request, res: Response): Promise<void> => {
+const deleteReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { reportId } = req.params;
+    if (!req.user?.id) {
+      res
+        .status(401)
+        .json({ message: "User not authenticated. Please login again." });
+    }
     const report = await Report.findByIdAndDelete(reportId);
     if (!report) {
       res.status(404).json({ message: "Report not found" });

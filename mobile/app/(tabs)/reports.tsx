@@ -167,7 +167,7 @@ export default function ReportScreen() {
                 source={{ uri: `${API_BASE_URL}/${selectedReport?.image}` }}
                 style={styles.modalImage}
               />
-              <View style={styles.overlay} />
+              {/* <View style={styles.overlay} /> */}
 
               {/* Buttons */}
               <View style={styles.actionButtons}>
