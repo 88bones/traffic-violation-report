@@ -19,8 +19,8 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { deleteReport } from "@/services/reportService";
-import { removeReport } from "@/redux/reportSlice";
+import { deleteReport, getReports } from "@/services/reportService";
+import { removeReport, setReports } from "@/redux/reportSlice";
 import { ComponentProps } from "react";
 import { useRouter } from "expo-router";
 
@@ -91,9 +91,11 @@ export default function ReportScreen() {
 
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const dispatch = useAppDispatch();
   const router = useRouter();
+
 
   const actionButtons = [
     {
@@ -144,6 +146,18 @@ export default function ReportScreen() {
     ]);
   };
 
+  //handle refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const data = await getReports(token!);
+      dispatch(setReports(data));
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    }
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.header}>My Reports</Text>
@@ -155,6 +169,8 @@ export default function ReportScreen() {
           renderItem={({ item }) => (
             <Item item={item} onPress={() => handlePress(item)} />
           )}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
           keyExtractor={(item) => item._id}
         />
       )}

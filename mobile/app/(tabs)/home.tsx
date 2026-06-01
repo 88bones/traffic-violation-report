@@ -3,10 +3,11 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { setReportLoading, setReports } from "@/redux/reportSlice";
 import { getReports } from "@/services/reportService";
 import ReportCard from "@/components/ReportCard";
+import DoughnutChart from "@/components/DoughnutChart";
 
 export default function HomeScreen() {
   const { user, token } = useAppSelector((state) => state.auth);
@@ -16,6 +17,8 @@ export default function HomeScreen() {
   );
   const dispatch = useAppDispatch();
   console.log(user);
+
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!isRehydrated || !token) return;
@@ -49,6 +52,7 @@ export default function HomeScreen() {
       </View>
 
       {!isLoading && <ReportCard reports={reports} />}
+      <DoughnutChart />
     </SafeAreaView>
   );
 }
