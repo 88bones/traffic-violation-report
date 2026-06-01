@@ -1,3 +1,4 @@
+import { COLORS } from "@/constant/colors";
 import { Report } from "@/types/types";
 import { StyleSheet, Text, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
@@ -54,42 +55,61 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
   ].filter((item) => item.value > 0);
   return (
     <View style={styles.container}>
-      <PieChart
-        donut
-        radius={150}
-        textSize={14}
-        innerRadius={90}
-        showText
-        textColor="white"
-        centerLabelComponent={() => {
-          return (
-            <View>
-              {pieData.map((data, index) => (
-                <View style={styles.legendContainer}>
-                  <Text
-                    style={[
-                      styles.colorBox,
-                      { backgroundColor: pieData[index].color },
-                    ]}
-                  ></Text>
-                  <Text key={index} style={styles.legendText}>
-                    {data.label}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          );
-        }}
-        data={pieData}
-      />
+      <Text style={styles.header}>Violation Stats</Text>
+      <View style={{ alignItems: "center" }}>
+        <PieChart
+          donut
+          radius={150}
+          textSize={14}
+          innerRadius={90}
+          showText
+          textColor="white"
+          centerLabelComponent={() => {
+            return (
+              <View>
+                {pieData.map((data, index) => (
+                  <View style={styles.legendContainer}>
+                    <Text
+                      style={[
+                        styles.colorBox,
+                        { backgroundColor: pieData[index].color },
+                      ]}
+                    ></Text>
+                    <Text key={index} style={styles.legendText}>
+                      {data.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            );
+          }}
+          data={pieData}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: COLORS.darkblue,
+    marginBottom: 12,
   },
   colorBox: {
     width: 15,
