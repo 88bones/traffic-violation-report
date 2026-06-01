@@ -52,7 +52,7 @@ export default function HomeScreen() {
       </View>
 
       {!isLoading && <ReportCard reports={reports} />}
-      <DoughnutChart />
+      <DoughnutChart reports={reports}/>
     </SafeAreaView>
   );
 }
