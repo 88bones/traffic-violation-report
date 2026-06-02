@@ -15,6 +15,7 @@ import { setReportLoading, setReports } from "@/redux/reportSlice";
 import { getReports } from "@/services/reportService";
 import ReportCard from "@/components/ReportCard";
 import DoughnutChart from "@/components/DoughnutChart";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const { user, token } = useAppSelector((state) => state.auth);
@@ -27,6 +28,8 @@ export default function HomeScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  const router = useRouter();
+
   useEffect(() => {
     if (!isRehydrated || !token) return;
     fetchReports();
@@ -37,7 +40,6 @@ export default function HomeScreen() {
     try {
       const data = await getReports(token!);
       dispatch(setReports(data));
-      // console.log(data);
     } catch (err: any) {
       Alert.alert("Error", err.message);
       console.log(err);
@@ -72,6 +74,7 @@ export default function HomeScreen() {
             size={24}
             color={COLORS.blue}
             style={styles.notification}
+            onPress={() => router.push("/(tabs)/notifications")}
           />
         </View>
 
@@ -90,7 +93,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 12,
-    paddingVertical: 20,
+    paddingVertical: 10,
     backgroundColor: COLORS.light,
   },
   scrollContainer: {},

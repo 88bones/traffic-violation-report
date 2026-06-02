@@ -68,16 +68,14 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
             return (
               <View>
                 {pieData.map((data, index) => (
-                  <View style={styles.legendContainer}>
+                  <View style={styles.legendContainer} key={index}>
                     <Text
                       style={[
                         styles.colorBox,
                         { backgroundColor: pieData[index].color },
                       ]}
                     ></Text>
-                    <Text key={index} style={styles.legendText}>
-                      {data.label}
-                    </Text>
+                    <Text style={styles.legendText}>{data.label}</Text>
                   </View>
                 ))}
               </View>

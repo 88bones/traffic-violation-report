@@ -169,10 +169,6 @@ export default function UpdateScreen() {
     }
     try {
       setIsLoading(true);
-
-      // const test = await fetch(`${API_BASE_URL}/api/reports`);
-      // console.log("Server reachable:", test.status);
-
       const formData = new FormData();
       formData.append("number_plate", numberPlate);
       formData.append("violation", selected);
