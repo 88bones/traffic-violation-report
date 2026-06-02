@@ -1,7 +1,6 @@
 import { useAppSelector } from "@/redux/hooks";
 import { COLORS } from "@/constant/colors";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState } from "react";
 import {
   Image,
   View,
@@ -19,11 +18,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MapView, { Marker, Region } from "react-native-maps";
-import { searchLocation } from "@/services/locationSearchService";
-import { createReport, updateReport } from "@/services/reportService";
-import API_BASE_URL from "@/config/apiConfig";
+import { useLocation, NEPAL_REGION } from "@/hooks/useLocation";
+import { useUpdateReportForm } from "@/hooks/useUpdateReportForm";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import * as ImagePicker from "expo-image-picker";
 
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
@@ -32,174 +29,38 @@ const violations = [
   { label: "Reckless Driving", value: Violation.RecklessDriving },
 ];
 
-const NEPAL_REGION: Region = {
-  latitude: 28.3949,
-  longitude: 84.124,
-  latitudeDelta: 6.0,
-  longitudeDelta: 6.0,
-};
-
-const NEPAL_BOUNDS = {
-  minLat: 26.3,
-  maxLat: 30.4,
-  minLng: 80.0,
-  maxLng: 88.2,
-};
-
 export default function UpdateScreen() {
-  const { reportId } = useLocalSearchParams<{ reportId: string }>();
-  const { token } = useAppSelector((state) => state.auth);
-  const report = useAppSelector((state) =>
-    state.reports.reports.find((r) => r._id === reportId),
-  );
-  console.log(report);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const [mapView, setMapView] = useState<boolean>(!!report?.location);
-  const [search, setSearch] = useState<string>(report?.location?.name || "");
-  const [results, setResults] = useState<any[]>([]);
-  const [description, setDescription] = useState(report?.description || "");
-  const [numberPlate, setNumberPlate] = useState(report?.number_plate || "");
-  const [locationName, setLocationName] = useState(
-    report?.location?.name || "",
-  );
-  const [pin, setPin] = useState<{
-    latitude: number;
-    longitude: number;
-  }>({
-    latitude: report?.location?.latitude || 0,
-    longitude: report?.location?.longitude || 0,
+  const report = useAppSelector((state) => {
+    const { reportId } = useLocalSearchParams<{ reportId: string }>();
+    return state.reports.reports.find((r) => r._id === reportId);
   });
-  const [image, setImage] = useState(`${API_BASE_URL}/${report?.image}` || "");
-  const [selected, setSelected] = useState<Violation | null>(
-    (report?.violation as Violation) ?? null,
-  );
 
-  const router = useRouter();
+  const {
+    search,
+    results,
+    pin,
+    locationName,
+    mapView,
+    mapRef,
+    handleSearch,
+    selectLocation,
+    onRegionChangeComplete,
+  } = useLocation();
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mapRef = useRef<MapView>(null);
-
-  const onRegionChangeComplete = (region: Region) => {
-    const isOutside =
-      region.latitude < NEPAL_BOUNDS.minLat ||
-      region.latitude > NEPAL_BOUNDS.maxLat ||
-      region.longitude < NEPAL_BOUNDS.minLng ||
-      region.longitude > NEPAL_BOUNDS.maxLng;
-
-    if (isOutside) {
-      mapRef.current?.animateToRegion(NEPAL_REGION, 300);
-    }
-  };
-
-  //search location
-  const handleSearch = async (query: string) => {
-    setSearch(query);
-    if (query.length < 3) {
-      setResults([]);
-      return;
-    }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await searchLocation(query);
-        setResults(res);
-      } catch (err: any) {
-        if (err?.response?.status === 429) {
-          console.log("Too many requests, slow down");
-        }
-      }
-    }, 500);
-  };
-  // console.log(results);
-  const selectLocation = (item: any) => {
-    const lat = parseFloat(item.lat);
-    const lng = parseFloat(item.lon);
-
-    setPin({ latitude: lat, longitude: lng });
-    setLocationName(item.display_name);
-    mapRef.current?.animateToRegion(
-      {
-        latitude: lat,
-        longitude: lng,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      },
-      500,
-    );
-
-    setSearch(item.display_name);
-    setResults([]);
-    setMapView(true);
-  };
-
-  // pick Image
-  const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (!permissionResult.granted) {
-      Alert.alert(
-        "Permission required",
-        "Permission to access the media library is required.",
-      );
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      setImage(result.assets[0].uri);
-    }
-  };
-
-  // submuit
-  const handleSubmit = async () => {
-    if (!numberPlate || !selected || !description || !pin) {
-      Alert.alert("Error", "Please fill in all fields.");
-      return;
-    }
-    try {
-      setIsLoading(true);
-      const formData = new FormData();
-      formData.append("number_plate", numberPlate);
-      formData.append("violation", selected);
-      formData.append("description", description);
-      formData.append(
-        "location",
-        JSON.stringify({
-          name: locationName,
-          latitude: pin.latitude,
-          longitude: pin.longitude,
-        }),
-      );
-      formData.append("image", {
-        uri: image,
-        name: "report.jpg",
-        type: "image/jpeg",
-      } as any);
-
-      await updateReport(token!, reportId, formData as any);
-      Alert.alert("Success", "Report updated successfully.");
-      router.replace("/(tabs)/reports");
-    } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err?.response?.data?.message || "Something went wrong.",
-      );
-      console.log(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    numberPlate,
+    setNumberPlate,
+    description,
+    setDescription,
+    selected,
+    setSelected,
+    isExpanded,
+    setIsExpanded,
+    isLoading,
+    image,
+    pickImage,
+    handleSubmit,
+  } = useUpdateReportForm();
 
   return (
     <KeyboardAvoidingView
@@ -319,7 +180,10 @@ export default function UpdateScreen() {
               </MapView>
             </View>
           )}
-          <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => handleSubmit(pin!, locationName)}
+          >
             {isLoading ? (
               <ActivityIndicator size={24} color={COLORS.blue} />
             ) : (
