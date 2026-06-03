@@ -5,6 +5,7 @@ import { useState } from "react";
 import { signin } from "@/services/authService";
 import { useAppDispatch } from "@/redux/hooks";
 import { setCredentials } from "@/redux/slice";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [data, setData] = useState<{ email: string; password: string }>({
@@ -14,6 +15,7 @@ const Login = () => {
   const [error, setError] = useState("");
 
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const handleChange = (field: string, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -28,7 +30,7 @@ const Login = () => {
     try {
       const response = await signin(data);
       dispatch(setCredentials({ user: response.User, token: response.token }));
-      console.log(response);
+      navigate("/dashboard");
       setError("");
     } catch (err) {
       console.error("Login error:", err);
