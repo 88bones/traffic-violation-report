@@ -20,8 +20,8 @@ export const getReports = async (token: string): Promise<Report[]> => {
 
 export const patchStatus = async (
   token: string,
-  status: string,
   reportId: string,
+  status: string,
 ): Promise<Report[]> => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
@@ -30,7 +30,7 @@ export const patchStatus = async (
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: status,
+      body: JSON.stringify({ status }),
     });
 
     const data = await response.json();

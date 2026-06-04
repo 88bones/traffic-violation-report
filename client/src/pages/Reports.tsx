@@ -5,7 +5,21 @@ import { useQuery } from "@tanstack/react-query";
 import type { Report } from "@/types/types";
 import { TableCell, TableRow } from "@/components/ui/table";
 import API_BASE_URL from "@/config/apiConfig";
-// import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { patchStatus } from "@/services/reportService";
+
+const statuses = [
+  { label: "Pending", value: "pending" },
+  { label: "Approved", value: "approved" },
+  { label: "Rejected", value: "rejected" },
+];
 
 const statusColor = (status: string) => {
   switch (status) {
@@ -25,8 +39,8 @@ const headers = [
   "Description",
   "Violation",
   "Location",
-  "Status",
   "Date",
+  "Status",
 ];
 
 const Reports = () => {
@@ -42,6 +56,21 @@ const Reports = () => {
     enabled: !!token,
   });
 
+  // handle status change
+  const queryClient = useQueryClient();
+
+  const { mutate: changeStatus } = useMutation({
+    mutationFn: ({ reportId, status }: { reportId: string; status: string }) =>
+      patchStatus(token!, reportId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
+
+  const handleStatusChange = (reportId: string, status: string) => {
+    changeStatus({ reportId, status });
+  };
+
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>{error.message}</p>;
 
@@ -51,7 +80,6 @@ const Reports = () => {
       <TableLayout
         headers={headers}
         data={reports ?? []}
-        // caption="All submitted violation reports"
         renderRow={(report: Report, index: number) => (
           <TableRow key={report._id}>
             <TableCell>{index + 1}</TableCell>
@@ -73,18 +101,32 @@ const Reports = () => {
             <TableCell className="capitalize">
               {report.violation.replace(/_/g, " ")}
             </TableCell>
-            <TableCell className="max-w-[200px] truncate">
+            <TableCell className="max-w-50 truncate">
               {report.location?.name ?? "Unknown"}
             </TableCell>
             <TableCell>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(report.status)}`}
-              >
-                {report.status}
-              </span>
+              {new Date(report.createdAt).toLocaleDateString()}
             </TableCell>
             <TableCell>
-              {new Date(report.createdAt).toLocaleDateString()}
+              <Select
+                defaultValue={report.status}
+                onValueChange={(value) => handleStatusChange(report._id, value)}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {statuses.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(s.value)}`}
+                      >
+                        {s.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </TableCell>
           </TableRow>
         )}
