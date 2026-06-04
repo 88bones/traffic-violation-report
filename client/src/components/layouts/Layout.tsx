@@ -9,13 +9,13 @@ export default function Layout() {
         <AppSidebar />
         <main className="flex-1 overflow-y-auto">
           <div className="flex items-center gap-2 border-b px-6 py-3">
-            <SidebarTrigger /> {/* ← collapse button */}
+            <SidebarTrigger />
             <h1 className="text-sm font-medium text-muted-foreground">
               Traffic Violation Dashboard
             </h1>
           </div>
           <div className="p-6">
-            <Outlet /> {/* ← pages render here */}
+            <Outlet />
           </div>
         </main>
       </div>
