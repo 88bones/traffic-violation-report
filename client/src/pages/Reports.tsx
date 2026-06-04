@@ -22,6 +22,7 @@ const headers = [
   "#",
   "Image",
   "Number Plate",
+  "Description",
   "Violation",
   "Location",
   "Status",
@@ -65,6 +66,10 @@ const Reports = () => {
               />
             </TableCell>
             <TableCell className="font-medium">{report.number_plate}</TableCell>
+            <TableCell className="max-w-50 whitespace-normal wrap-break-words line-clamp-3">
+              {report.description}
+            </TableCell>
+
             <TableCell className="capitalize">
               {report.violation.replace(/_/g, " ")}
             </TableCell>

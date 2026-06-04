@@ -155,4 +155,45 @@ const updateReport = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
-export { createReport, getReports, getReport, deleteReport, updateReport };
+const patchReportStatus = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { reportId } = req.params;
+    const { status } = req.body;
+
+    if (!req.user?.id) {
+      res
+        .status(401)
+        .json({ message: "User not authenticated. Please login again." });
+    }
+
+    const report = await Report.findById(reportId);
+
+    if (!report) {
+      res.status(404).json({ message: "Report not found." });
+      return;
+    }
+
+    report.status = status;
+    await report.save();
+
+    res.status(200).json({
+      message: "Status updated successfully.",
+      report,
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export {
+  createReport,
+  getReports,
+  getReport,
+  deleteReport,
+  updateReport,
+  patchReportStatus,
+};

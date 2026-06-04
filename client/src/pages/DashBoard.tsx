@@ -2,8 +2,9 @@ import { useAppSelector } from "@/redux/hooks";
 import React from "react";
 
 const DashBoard = () => {
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, token } = useAppSelector((state) => state.auth);
   console.log(user);
+  console.log(token);
 
   return (
     <div>
