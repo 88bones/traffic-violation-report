@@ -4,6 +4,7 @@ import { getReports } from "@/services/reportService";
 import { useQuery } from "@tanstack/react-query";
 import type { Report } from "@/types/types";
 import { TableCell, TableRow } from "@/components/ui/table";
+import API_BASE_URL from "@/config/apiConfig";
 // import { Badge } from "@/components/ui/badge";
 
 const statusColor = (status: string) => {
@@ -19,6 +20,7 @@ const statusColor = (status: string) => {
 
 const headers = [
   "#",
+  "Image",
   "Number Plate",
   "Violation",
   "Location",
@@ -52,6 +54,16 @@ const Reports = () => {
         renderRow={(report: Report, index: number) => (
           <TableRow key={report._id}>
             <TableCell>{index + 1}</TableCell>
+            <TableCell>
+              <img
+                src={`${API_BASE_URL}/${report.image}`}
+                alt="Report"
+                className="h-16 w-16 object-cover rounded cursor-pointer"
+                onClick={() =>
+                  window.open(`${API_BASE_URL}/${report.image}`, "_blank")
+                }
+              />
+            </TableCell>
             <TableCell className="font-medium">{report.number_plate}</TableCell>
             <TableCell className="capitalize">
               {report.violation.replace(/_/g, " ")}
