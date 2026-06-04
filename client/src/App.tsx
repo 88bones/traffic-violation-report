@@ -2,6 +2,7 @@ import "./App.css";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import DashBoard from "./pages/DashBoard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppWrapper() {
   return (
@@ -15,9 +16,16 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
 
-        <Route path="/dashboard" element={<DashBoard />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <DashBoard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   );

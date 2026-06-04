@@ -30,7 +30,8 @@ const Login = () => {
     try {
       const response = await signin(data);
       dispatch(setCredentials({ user: response.User, token: response.token }));
-      navigate("/dashboard");
+      console.log(response);
+      navigate("/");
       setError("");
     } catch (err) {
       console.error("Login error:", err);
