@@ -1,4 +1,4 @@
- import { Request } from "express";
+import { Request } from "express";
 import mongoose from "mongoose";
 
 // users
@@ -43,4 +43,14 @@ export interface IReport {
   status: "pending" | "approved" | "rejected";
   reportedBy: mongoose.Types.ObjectId;
   createdAt: string;
+}
+
+// NOTIFICATION
+export interface INotification {
+  userId: mongoose.Types.ObjectId;
+  reportId: mongoose.Types.ObjectId;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: Date;
 }

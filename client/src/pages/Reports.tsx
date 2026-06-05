@@ -112,10 +112,10 @@ const Reports = () => {
                 defaultValue={report.status}
                 onValueChange={(value) => handleStatusChange(report._id, value)}
               >
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32 ">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black">
                   {statuses.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
                       <span
