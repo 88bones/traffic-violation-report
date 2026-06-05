@@ -4,6 +4,7 @@ import authRoutes from "./routes/authRoutes.js";
 import errorHandler from "./middleware/errorHandler.js";
 import path from "path";
 import reportRoutes from "./routes/reportRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import { fileURLToPath } from "url";
 
 const app = express();
@@ -18,6 +19,7 @@ app.use("/uploads", express.static(path.join(__dirname, "./uploads")));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use(errorHandler);
 
