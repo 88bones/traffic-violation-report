@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Report from "../models/reportModel.js";
 import { AuthRequest } from "../types/model.types.js";
+import Notification from "../models/notificationModel.js";
 
 const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -170,6 +171,16 @@ const patchReportStatus = async (
       res.status(404).json({ message: "Report not found." });
       return;
     }
+
+    // create notification
+    await Notification.create({
+      userId: report.reportedBy,
+      reportId: report._id,
+      title: "Report Status Updated",
+      message: `Your report for vehicle ${report.number_plate} has been ${status}`,
+      isRead: false,
+    });
+
     res.status(200).json({ message: "Status updated.", report });
   } catch (err) {
     const error = err as Error;
