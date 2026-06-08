@@ -9,6 +9,7 @@ export interface IUser {
   password: string;
   phone: number;
   role: "user" | "admin";
+  pushToken: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +43,7 @@ export interface IReport {
   location: ILocation;
   status: "pending" | "approved" | "rejected";
   reportedBy: mongoose.Types.ObjectId;
+
   createdAt: string;
 }
 

@@ -110,4 +110,20 @@ const fetchUserProfile = async (
   }
 };
 
-export default { signUp, signIn, fetchUserProfile };
+// push token
+const savePushToken = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    await User.findByIdAndUpdate(req.user?.id, {
+      pushToken: req.body.pushToken,
+    });
+    res.status(200).json({ message: "Push token saved." });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export default { signUp, signIn, fetchUserProfile, savePushToken };

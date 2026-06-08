@@ -21,7 +21,11 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
-      "package": "com.x88bones.mobile"
+      "package": "com.x88bones.mobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -40,16 +44,18 @@
             "backgroundColor": "#000000"
           }
         }
-        
-      ],[
-         "expo-camera",
+      ],
+      [
+        "expo-camera",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true,
           "barcodeScannerEnabled": false
         }
-      ],["expo-image-picker",
+      ],
+      [
+        "expo-image-picker",
         {
           "photosPermission": "Allow $(PRODUCT_NAME) to access your gallery",
           "colors": {
@@ -59,12 +65,23 @@
             "colors": {
               "cropToolbarColor": "#000000"
             }
-          }}], 
-          ["expo-notifications"]
+          }
+        }
+      ],
+      [
+        "expo-notifications"
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
-  }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "75c6332e-bac2-4709-8817-2758638d4b31"
+      }
+    },
+    "owner": "88bones"
+  },
 }

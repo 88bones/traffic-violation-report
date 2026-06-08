@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import Report from "../models/reportModel.js";
 import { AuthRequest } from "../types/model.types.js";
 import Notification from "../models/notificationModel.js";
+import User from "../models/userModel.js";
+import { sendPushNotification } from "../utils/pushNotification.js";
 
 const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -170,6 +172,17 @@ const patchReportStatus = async (
     if (!report) {
       res.status(404).json({ message: "Report not found." });
       return;
+    }
+
+    const user = await User.findById(report.reportedBy);
+
+    //send push notification
+    if (user?.pushToken) {
+      await sendPushNotification(
+        user.pushToken,
+        "Report Status Updated",
+        `Your report for ${report.number_plate} has been ${status}.`,
+      );
     }
 
     // create notification
