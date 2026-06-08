@@ -3,6 +3,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { COLORS } from "@/constant/colors";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import { useAppSelector } from "@/redux/hooks";
 
 function CameraButton() {
   const router = useRouter();
@@ -20,6 +21,8 @@ function CameraButton() {
 }
 
 export default function TabsLayout() {
+  const { unreadCount } = useAppSelector((state) => state.notifications);
+
   return (
     <Tabs
       screenOptions={{
@@ -93,6 +96,20 @@ export default function TabsLayout() {
           title: "Notifications",
           tabBarStyle: { display: "none" },
           href: null,
+          tabBarIcon: ({ color, size, focused }) => (
+            <View>
+              <Ionicons
+                name={focused ? "notifications" : "notifications-outline"}
+                size={size}
+                color={color}
+              />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  {/* <Text style={styles.badgeText}>{unreadCount}</Text> */}
+                </View>
+              )}
+            </View>
+          ),
         }}
       />
     </Tabs>
@@ -131,4 +148,16 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 1,
   },
+  badge: {
+    position: "absolute",
+    top: -4,
+    right: -8,
+    backgroundColor: "red",
+    borderRadius: 999,
+    width: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badgeText: { color: "#fff", fontSize: 9, fontWeight: "bold" },
 });

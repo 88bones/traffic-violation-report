@@ -38,3 +38,12 @@ export interface Report {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface Notification {
+  _id: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  reportId: string;
+  createdAt: string;
+}

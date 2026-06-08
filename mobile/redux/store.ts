@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slice";
 import reportReducer from "./reportSlice";
+import notificationReducer from "./notificationSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { persistStore, persistReducer } from "redux-persist";
 
@@ -16,6 +17,7 @@ export const store = configureStore({
   reducer: {
     auth: persistedReducer,
     reports: reportReducer,
+    notifications: notificationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

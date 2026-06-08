@@ -59,7 +59,8 @@
             "colors": {
               "cropToolbarColor": "#000000"
             }
-          }}]
+          }}], 
+          ["expo-notifications"]
     ],
     "experiments": {
       "typedRoutes": true,
