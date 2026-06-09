@@ -41,3 +41,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+##firebase
+/firebase-debug.log
+google.services.json
+traffic-violation-8720d-firebase-adminsdk-fbsvc-2bd34d755b.json

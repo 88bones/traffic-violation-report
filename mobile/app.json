@@ -21,6 +21,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "softwareKeyboardLayoutMode": "resize",
+      "googleServicesFile": "./google-services.json", 
       "package": "com.x88bones.mobile",
       "permissions": [
         "android.permission.CAMERA",
@@ -83,5 +84,5 @@
       }
     },
     "owner": "88bones"
-  },
+  }
 }

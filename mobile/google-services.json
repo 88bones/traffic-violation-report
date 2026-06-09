@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "467943170717",
+    "project_id": "traffic-violation-8720d",
+    "storage_bucket": "traffic-violation-8720d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:467943170717:android:75f7dfbd0099effbf96a74",
+        "android_client_info": {
+          "package_name": "com.x88bones.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDy69EzzMmuy_kqEjsJlw_m0-cdts4spHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
