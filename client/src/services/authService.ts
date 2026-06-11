@@ -41,6 +41,20 @@ export const fetchUserProfile = async (userId: string) => {
   }
 };
 
+export const getUsers = async (token: string) => {
+  try {
+    const res = await axios.get(`${API_BASE_URL}/api/auth/users`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return res.data;
+  } catch (err) {
+    throw err;
+  }
+};
+
 export const logout = () => {
   localStorage.removeItem("authToken");
 };
