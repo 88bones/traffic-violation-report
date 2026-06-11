@@ -5,7 +5,9 @@ import {
   setNotifications,
 } from "@/redux/notificationSlice";
 import { getNotifications, markAsRead } from "@/services/notificationService";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import {
   ActivityIndicator,
@@ -23,6 +25,7 @@ export default function NotificationsScreen() {
     (state) => state.notifications,
   );
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     fetchNotifications();
@@ -91,6 +94,11 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         )}
       />
+      <View style={styles.dashboard}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/home")}>
+          <FontAwesome name="home" size={32} color="white" />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -153,4 +161,21 @@ const styles = StyleSheet.create({
   },
   empty: { alignItems: "center", marginTop: 80, gap: 12 },
   emptyText: { fontSize: 14, color: "#999" },
+  dashboard: {
+    position: "absolute",
+    bottom: 20,
+    right: 0,
+    backgroundColor: COLORS.blue,
+    borderRadius: 50,
+    marginHorizontal: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 1,
+    shadowRadius: 5,
+    elevation: 1,
+  },
 });
