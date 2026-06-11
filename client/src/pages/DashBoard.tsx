@@ -1,10 +1,23 @@
 import { useAppSelector } from "@/redux/hooks";
-import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const DashBoard = () => {
-  const { user, token } = useAppSelector((state) => state.auth);
-  console.log(user);
-  console.log(token);
+  const { token } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+    }
+  }, []);
+
+  const {data:users,isLoading,error}=useQuery({
+    queryKey:["users"],
+    queryFn:()=>getUsers(token!);
+    enabled:!!token,
+  })
 
   return (
     <div>

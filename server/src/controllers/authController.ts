@@ -126,4 +126,16 @@ const savePushToken = async (
   }
 };
 
-export default { signUp, signIn, fetchUserProfile, savePushToken };
+// get all users
+const getUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const users = await User.find().select("-password");
+
+    res.status(200).json(users);
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export default { signUp, signIn, fetchUserProfile, savePushToken, getUsers };

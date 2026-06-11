@@ -13,4 +13,6 @@ router.post("/signin", validateLogin, auth.signIn);
 router.get("/profile/:userId", auth.fetchUserProfile);
 router.post("/push-token", authMiddleware, auth.savePushToken);
 
+router.get("/users", authMiddleware, auth.getUsers);
+
 export default router;
