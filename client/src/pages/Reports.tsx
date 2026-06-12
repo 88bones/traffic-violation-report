@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { patchStatus } from "@/services/reportService";
+import ReportFilter from "@/components/layouts/ReportFilter";
+import { useState } from "react";
 
 const statuses = [
   { label: "Pending", value: "pending" },
@@ -45,6 +47,8 @@ const headers = [
 
 const Reports = () => {
   const { token } = useAppSelector((state) => state.auth);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedViolation, setSelectedViolation] = useState("");
 
   const {
     data: reports,
@@ -71,15 +75,36 @@ const Reports = () => {
     changeStatus({ reportId, status });
   };
 
+  //filfter reports
+  const filteredReports = (reports ?? []).filter((report) => {
+    const statusMatch =
+      !selectedStatus ||
+      selectedStatus === "all" ||
+      report.status === selectedStatus;
+    const violationMatch =
+      !selectedViolation ||
+      selectedViolation === "all" ||
+      report.violation === selectedViolation;
+    return statusMatch && violationMatch;
+  });
+
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>{error.message}</p>;
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Reports</h1>
+      <p className="text-muted-foreground">
+        Manage and review traffic violation reports submitted by users.
+      </p>
+
+      <ReportFilter
+        setSelectedStatus={setSelectedStatus}
+        setSelectedViolation={setSelectedViolation}
+      />
       <TableLayout
         headers={headers}
-        data={reports ?? []}
+        data={filteredReports}
         renderRow={(report: Report, index: number) => (
           <TableRow key={report._id}>
             <TableCell>{index + 1}</TableCell>
@@ -112,17 +137,17 @@ const Reports = () => {
                 defaultValue={report.status}
                 onValueChange={(value) => handleStatusChange(report._id, value)}
               >
-                <SelectTrigger className="w-32 ">
+                <SelectTrigger className={`${statusColor(report.status)} w-32`}>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-black">
+                <SelectContent className="bg-white">
                   {statuses.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(s.value)}`}
-                      >
-                        {s.label}
-                      </span>
+                    <SelectItem
+                      key={s.value}
+                      value={s.value}
+                      className={`${statusColor(s.value)}`}
+                    >
+                      {s.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
