@@ -1,7 +1,8 @@
+import { useState } from "react";
 import TableLayout from "@/components/layouts/TableLayout";
 import { useAppSelector } from "@/redux/hooks";
-import { getReports } from "@/services/reportService";
-import { useQuery } from "@tanstack/react-query";
+import { getReports, patchStatus } from "@/services/reportService";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Report } from "@/types/types";
 import { TableCell, TableRow } from "@/components/ui/table";
 import API_BASE_URL from "@/config/apiConfig";
@@ -12,10 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { patchStatus } from "@/services/reportService";
 import ReportFilter from "@/components/layouts/ReportFilter";
-import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const statuses = [
   { label: "Pending", value: "pending" },
@@ -38,7 +43,6 @@ const headers = [
   "#",
   "Image",
   "Number Plate",
-  "Description",
   "Violation",
   "Location",
   "Date",
@@ -50,6 +54,11 @@ const Reports = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedViolation, setSelectedViolation] = useState("");
 
+  // State for the modal
+  const [viewingReport, setViewingReport] = useState<Report | null>(null);
+
+  const queryClient = useQueryClient();
+
   const {
     data: reports,
     isLoading,
@@ -60,9 +69,6 @@ const Reports = () => {
     enabled: !!token,
   });
 
-  // handle status change
-  const queryClient = useQueryClient();
-
   const { mutate: changeStatus } = useMutation({
     mutationFn: ({ reportId, status }: { reportId: string; status: string }) =>
       patchStatus(token!, reportId, status),
@@ -71,11 +77,6 @@ const Reports = () => {
     },
   });
 
-  const handleStatusChange = (reportId: string, status: string) => {
-    changeStatus({ reportId, status });
-  };
-
-  //filfter reports
   const filteredReports = (reports ?? []).filter((report) => {
     const statusMatch =
       !selectedStatus ||
@@ -88,65 +89,64 @@ const Reports = () => {
     return statusMatch && violationMatch;
   });
 
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>{error.message}</p>;
+  if (isLoading) return <p className="p-10 text-center">Loading...</p>;
+  if (error) return <p className="text-red-500">{(error as Error).message}</p>;
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">Reports</h1>
       <p className="text-muted-foreground">
-        Manage and review traffic violation reports submitted by users.
+        Manage and review traffic violation reports.
       </p>
 
       <ReportFilter
         setSelectedStatus={setSelectedStatus}
         setSelectedViolation={setSelectedViolation}
       />
+
       <TableLayout
         headers={headers}
         data={filteredReports}
         renderRow={(report: Report, index: number) => (
-          <TableRow key={report._id}>
+          <TableRow
+            key={report._id}
+            className="cursor-pointer hover:bg-slate-50"
+            onClick={() => setViewingReport(report)}
+          >
             <TableCell>{index + 1}</TableCell>
             <TableCell>
               <img
                 src={`${API_BASE_URL}/${report.image}`}
                 alt="Report"
-                className="h-16 w-16 object-cover rounded cursor-pointer"
-                onClick={() =>
-                  window.open(`${API_BASE_URL}/${report.image}`, "_blank")
-                }
+                className="h-12 w-12 object-cover rounded"
               />
             </TableCell>
-            <TableCell className="font-medium">{report.number_plate}</TableCell>
-            <TableCell className="max-w-50 whitespace-normal wrap-break-words line-clamp-3">
-              {report.description}
+            <TableCell className="font-medium uppercase">
+              {report.number_plate}
             </TableCell>
-
             <TableCell className="capitalize">
               {report.violation.replace(/_/g, " ")}
             </TableCell>
-            <TableCell className="max-w-50 truncate">
+            <TableCell className="max-w-[150px] truncate">
               {report.location?.name ?? "Unknown"}
             </TableCell>
             <TableCell>
               {new Date(report.createdAt).toLocaleDateString()}
             </TableCell>
-            <TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
+              {/* stopPropagation prevents row click (modal) from opening when changing status */}
               <Select
                 defaultValue={report.status}
-                onValueChange={(value) => handleStatusChange(report._id, value)}
+                onValueChange={(value) =>
+                  changeStatus({ reportId: report._id, status: value })
+                }
               >
                 <SelectTrigger className={`${statusColor(report.status)} w-32`}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
                   {statuses.map((s) => (
-                    <SelectItem
-                      key={s.value}
-                      value={s.value}
-                      className={`${statusColor(s.value)}`}
-                    >
+                    <SelectItem key={s.value} value={s.value}>
                       {s.label}
                     </SelectItem>
                   ))}
@@ -156,6 +156,77 @@ const Reports = () => {
           </TableRow>
         )}
       />
+
+      {/* Single Dialog Instance */}
+      <Dialog
+        open={!!viewingReport}
+        onOpenChange={() => setViewingReport(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Report Details</DialogTitle>
+            <DialogDescription>
+              Violation reported on{" "}
+              {viewingReport &&
+                new Date(viewingReport.createdAt).toLocaleString()}
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingReport && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <img
+                  src={`${API_BASE_URL}/${viewingReport.image}`}
+                  alt="Evidence"
+                  className="w-full rounded-lg border object-cover"
+                />
+                <p className="text-sm font-semibold">
+                  Plate:{" "}
+                  <span className="uppercase">
+                    {viewingReport.number_plate}
+                  </span>
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-500 uppercase">
+                    Violation
+                  </h4>
+                  <p className="capitalize">
+                    {viewingReport.violation.replace(/_/g, " ")}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-500 uppercase">
+                    Description
+                  </h4>
+                  <p className="text-sm">
+                    {viewingReport.description || "No description provided."}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-500 uppercase">
+                    Location
+                  </h4>
+                  <p className="text-sm">
+                    {viewingReport.location?.name || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-gray-500 uppercase">
+                    Current Status
+                  </h4>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-bold ${statusColor(viewingReport.status)}`}
+                  >
+                    {viewingReport.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
