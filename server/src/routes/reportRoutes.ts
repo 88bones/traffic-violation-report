@@ -9,6 +9,7 @@ import {
 } from "../controllers/reportController.js";
 import upload from "./../middleware/upload.js";
 import authMiddleware from "./../middleware/authMiddleware.js";
+import { getNearbyReports } from "../controllers/nearbyReports.js";
 
 const router = express.Router();
 
@@ -19,5 +20,6 @@ router.get("/:reportId", authMiddleware, getReport);
 router.delete("/:reportId", authMiddleware, deleteReport);
 router.patch("/:reportId", authMiddleware, patchReportStatus);
 router.put("/:reportId", authMiddleware, upload.single("image"), updateReport);
+router.get("/nearby", authMiddleware, getNearbyReports);
 
 export default router;

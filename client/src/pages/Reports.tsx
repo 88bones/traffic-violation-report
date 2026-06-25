@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const statuses = [
   { label: "Pending", value: "pending" },
@@ -53,9 +54,14 @@ const Reports = () => {
   const { token } = useAppSelector((state) => state.auth);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedViolation, setSelectedViolation] = useState("");
-
   // State for the modal
   const [viewingReport, setViewingReport] = useState<Report | null>(null);
+  const [viewMode, setViewMode] = useState<"all" | "nearby">("all");
+
+  const { locationName, longitude, latitude } = useAppSelector(
+    (state) => state.location,
+  );
+  // console.log({ locationName, longitude, latitude });
 
   const queryClient = useQueryClient();
 
@@ -77,6 +83,26 @@ const Reports = () => {
     },
   });
 
+  // Haversine distance function
+  const haversineDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  //all filter
   const filteredReports = (reports ?? []).filter((report) => {
     const statusMatch =
       !selectedStatus ||
@@ -86,7 +112,20 @@ const Reports = () => {
       !selectedViolation ||
       selectedViolation === "all" ||
       report.violation === selectedViolation;
-    return statusMatch && violationMatch;
+
+    // distance filter
+    const distanceMatch =
+      viewMode === "all" ||
+      !latitude ||
+      !longitude ||
+      haversineDistance(
+        latitude,
+        longitude,
+        report.location.latitude,
+        report.location.longitude,
+      ) <= 40;
+
+    return statusMatch && violationMatch && distanceMatch;
   });
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;
@@ -104,6 +143,35 @@ const Reports = () => {
         setSelectedViolation={setSelectedViolation}
       />
 
+      {locationName && (
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1">
+            <label className="font-bold">Your Location:</label>
+            <p>{locationName.split("-")[0].trim()}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "nearby" ? "default" : "outline"}
+              className="hover:bg-black hover:text-white transition-colors duration-300"
+              onClick={() => setViewMode("nearby")} // ← connect
+            >
+              View 40KM
+            </Button>
+            <Button
+              variant={viewMode === "all" ? "default" : "outline"}
+              className="hover:bg-black hover:text-white transition-colors duration-300"
+              onClick={() => setViewMode("all")} // ← connect
+            >
+              View All
+            </Button>
+          </div>
+          {viewMode === "nearby" && (
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredReports.length} reports within 40km
+            </p>
+          )}
+        </div>
+      )}
       <TableLayout
         headers={headers}
         data={filteredReports}
