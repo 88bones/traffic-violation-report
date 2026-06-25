@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./slice";
+import locationReducer from "./locationSlice";
 
 const loadState = () => {
   try {
@@ -9,6 +10,7 @@ const loadState = () => {
         user: JSON.parse(localStorage.getItem("user") ?? "null"),
         isLoading: false,
         error: null,
+        // ← remove location from here
       },
     };
   } catch {
@@ -31,11 +33,11 @@ const saveState = (token: string | null, user: any) => {
 export const store = configureStore({
   reducer: {
     auth: authReducer,
+    location: locationReducer,
   },
-  preloadedState: loadState(), // rehydrate on startup
+  preloadedState: loadState(),
 });
 
-// persist on every state change
 store.subscribe(() => {
   const { token, user } = store.getState().auth;
   saveState(token, user);

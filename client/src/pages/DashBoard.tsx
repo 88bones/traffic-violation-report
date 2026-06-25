@@ -3,12 +3,13 @@ import { useAppSelector } from "@/redux/hooks";
 import { MapPin } from "lucide-react";
 import { useEffect } from "react";
 
-const headers = ["#", "Name", "Email", "Phone"];
+// const headers = ["#", "Name", "Email", "Phone"];
 
 const DashBoard = () => {
   const { token } = useAppSelector((state) => state.auth);
-  const { getLocation, location, locationName, isLocating } = useLocation();
-  console.log(location);
+  const { getLocation, locationName, isLocating } = useLocation();
+
+  // console.log(locationName);
 
   useEffect(() => {
     getLocation();

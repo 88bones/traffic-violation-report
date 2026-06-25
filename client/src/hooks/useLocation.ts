@@ -1,12 +1,12 @@
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { setLocation, clearLocation } from "@/redux/locationSlice";
 import { useState } from "react";
 
 export function useLocation() {
-  const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-
-  const [locationName, setLocationName] = useState("");
+  const dispatch = useAppDispatch();
+  const { latitude, longitude, locationName } = useAppSelector(
+    (state) => state.location,
+  );
   const [isLocating, setIsLocating] = useState(false);
 
   const getLocation = () => {
@@ -20,7 +20,6 @@ export function useLocation() {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
-        setLocation({ latitude, longitude });
 
         try {
           const res = await fetch(
@@ -28,9 +27,21 @@ export function useLocation() {
             { headers: { "User-Agent": "TrafficViolationReporter/1.0" } },
           );
           const data = await res.json();
-          setLocationName(data.display_name);
+          dispatch(
+            setLocation({
+              latitude,
+              longitude,
+              locationName: data.display_name,
+            }),  
+          );
         } catch {
-          setLocationName(`${latitude}, ${longitude}`);
+          dispatch(
+            setLocation({
+              latitude,
+              longitude,
+              locationName: `${latitude}, ${longitude}`,
+            }),
+          );
         } finally {
           setIsLocating(false);
         }
@@ -42,10 +53,13 @@ export function useLocation() {
       },
     );
   };
+
   return {
-    location,
+    latitude,
+    longitude,
     locationName,
     isLocating,
     getLocation,
+    clearLocation: () => dispatch(clearLocation()),
   };
 }
