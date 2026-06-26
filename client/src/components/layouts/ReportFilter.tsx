@@ -7,6 +7,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Violation } from "@/types/types";
+import { useAppSelector } from "@/redux/hooks";
+import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 
 const statuses = [
   { label: "Pending", value: "pending" },
@@ -35,12 +44,20 @@ const violations = [
 interface ReportFilterProps {
   setSelectedStatus: React.Dispatch<React.SetStateAction<string>>;
   setSelectedViolation: React.Dispatch<React.SetStateAction<string>>;
+  setSelectedRadius: React.Dispatch<React.SetStateAction<number | "all">>;
+  selectedRadius: number | "all";
 }
 
 const ReportFilter = ({
   setSelectedStatus,
   setSelectedViolation,
+  setSelectedRadius,
+  selectedRadius,
 }: ReportFilterProps) => {
+  const { locationName, longitude, latitude } = useAppSelector(
+    (state) => state.location,
+  );
+
   return (
     <div>
       <section className="flex gap-2">
@@ -77,6 +94,49 @@ const ReportFilter = ({
           </SelectContent>
         </Select>
       </section>
+
+      {locationName && (
+        <div className="flex items-center gap-4 mt-6">
+          <FieldSet className="w-full max-w-xs">
+            <FieldLegend variant="label">Your Location:</FieldLegend>
+            <FieldDescription>
+              {locationName.split("-")[0].trim()}
+            </FieldDescription>
+            <RadioGroup
+              value={selectedRadius.toString()}
+              onValueChange={(val) => {
+                setSelectedRadius(val === "all" ? "all" : parseInt(val));
+                console.log("Selected radius:", val);
+              }}
+            >
+              <Field orientation="horizontal">
+                <RadioGroupItem value="20" id="20" />
+                <FieldLabel htmlFor="20" className="font-normal">
+                  Radius 20KM
+                </FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <RadioGroupItem value="40" id="40" />
+                <FieldLabel htmlFor="40" className="font-normal">
+                  Radius 40KM
+                </FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <RadioGroupItem value="60" id="60" />
+                <FieldLabel htmlFor="60" className="font-normal">
+                  Radius 60KM
+                </FieldLabel>
+              </Field>
+              <Field orientation="horizontal">
+                <RadioGroupItem value="all" id="all" />
+                <FieldLabel htmlFor="all" className="font-normal">
+                  All
+                </FieldLabel>
+              </Field>
+            </RadioGroup>
+          </FieldSet>
+        </div>
+      )}
     </div>
   );
 };

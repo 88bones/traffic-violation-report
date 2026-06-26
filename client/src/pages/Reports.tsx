@@ -56,7 +56,7 @@ const Reports = () => {
   const [selectedViolation, setSelectedViolation] = useState("");
   // State for the modal
   const [viewingReport, setViewingReport] = useState<Report | null>(null);
-  const [viewMode, setViewMode] = useState<"all" | "nearby">("all");
+  const [selectedRadius, setSelectedRadius] = useState<number | "all">("all");
 
   const { locationName, longitude, latitude } = useAppSelector(
     (state) => state.location,
@@ -113,9 +113,8 @@ const Reports = () => {
       selectedViolation === "all" ||
       report.violation === selectedViolation;
 
-    // distance filter
     const distanceMatch =
-      viewMode === "all" ||
+      selectedRadius === "all" ||
       !latitude ||
       !longitude ||
       haversineDistance(
@@ -123,7 +122,7 @@ const Reports = () => {
         longitude,
         report.location.latitude,
         report.location.longitude,
-      ) <= 40;
+      ) <= selectedRadius;
 
     return statusMatch && violationMatch && distanceMatch;
   });
@@ -141,37 +140,10 @@ const Reports = () => {
       <ReportFilter
         setSelectedStatus={setSelectedStatus}
         setSelectedViolation={setSelectedViolation}
+        setSelectedRadius={setSelectedRadius}
+        selectedRadius={selectedRadius}
       />
 
-      {locationName && (
-        <div className="flex items-center gap-4">
-          <div className="flex gap-1">
-            <label className="font-bold">Your Location:</label>
-            <p>{locationName.split("-")[0].trim()}</p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === "nearby" ? "default" : "outline"}
-              className="hover:bg-black hover:text-white transition-colors duration-300"
-              onClick={() => setViewMode("nearby")} // ← connect
-            >
-              View 40KM
-            </Button>
-            <Button
-              variant={viewMode === "all" ? "default" : "outline"}
-              className="hover:bg-black hover:text-white transition-colors duration-300"
-              onClick={() => setViewMode("all")} // ← connect
-            >
-              View All
-            </Button>
-          </div>
-          {viewMode === "nearby" && (
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredReports.length} reports within 40km
-            </p>
-          )}
-        </div>
-      )}
       <TableLayout
         headers={headers}
         data={filteredReports}
