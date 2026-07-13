@@ -156,6 +156,10 @@ const styles = StyleSheet.create({
     // borderRadius: 12,
     marginTop: 24,
   },
+  error: {
+    color: "red",
+    marginTop: 12,
+  },
   label: {
     fontSize: 14,
     color: COLORS.light,
