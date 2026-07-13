@@ -1,10 +1,11 @@
 import { COLORS } from "@/constant/colors";
-import { fetchUserProfile, signin } from "@/services/authService";
+import { signin } from "@/services/authService";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -30,6 +31,7 @@ export default function SignInScreen() {
   const handleChange = (field: string, value: string) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
+
   const handleSubmit = async () => {
     if (!data.email || !data.password) {
       setError("Please fill in all fields.");
@@ -45,12 +47,12 @@ export default function SignInScreen() {
 
       router.replace("/(camera)");
     } catch (err: any) {
-      console.error("Signup error:", err);
       const errorMessage =
         err?.response?.data?.message ||
         err?.message ||
         "An error occurred. Please try again.";
-      setError(errorMessage);
+      console.error(err);
+      Alert.alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +110,12 @@ export default function SignInScreen() {
             Don't have an account?
             <Text style={styles.linkText}> Sign Up</Text>
           </Text>
+
+          {error && (
+            <View>
+              <Text>{error}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
