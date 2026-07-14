@@ -38,7 +38,7 @@ const Users = () => {
       <p className="text-gray-500">Manage your users here</p>
       <TableLayout
         headers={headers}
-        data={users ?? []}
+        data={users}
         renderRow={(user: User, index: number) => (
           <TableRow key={user._id}>
             <TableCell>{index + 1}</TableCell>

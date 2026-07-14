@@ -11,6 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./components/layouts/Layout";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
+import PdfViewer from "./components/layouts/PdfViewer";
 
 function AppWrapper() {
   return (
@@ -38,6 +39,7 @@ function App() {
           <Route path="users" element={<Users />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/pdf/:id" element={<PdfViewer />} />
       </Routes>
     </>
   );

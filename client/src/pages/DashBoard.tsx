@@ -1,3 +1,4 @@
+import PdfViewer from "@/components/layouts/PdfViewer";
 import { useLocation } from "@/hooks/useLocation";
 import { useAppSelector } from "@/redux/hooks";
 import { MapPin } from "lucide-react";
@@ -20,6 +21,7 @@ const DashBoard = () => {
       <h1 className="text-2xl font-bold">DashBoARD</h1>
       {isLocating && <p>Getting location...</p>}
       {locationName && <p>{locationName.split("-")[0].trim()}</p>}
+      <PdfViewer />
     </div>
   );
 };

@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const statuses = [
   { label: "Pending", value: "pending" },
@@ -48,6 +49,7 @@ const headers = [
   "Location",
   "Date",
   "Status",
+  "Actions",
 ];
 
 const Reports = () => {
@@ -64,6 +66,7 @@ const Reports = () => {
   // console.log({ locationName, longitude, latitude });
 
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const {
     data: reports,
@@ -174,7 +177,6 @@ const Reports = () => {
               {new Date(report.createdAt).toLocaleDateString()}
             </TableCell>
             <TableCell onClick={(e) => e.stopPropagation()}>
-              {/* stopPropagation prevents row click (modal) from opening when changing status */}
               <Select
                 defaultValue={report.status}
                 onValueChange={(value) =>
@@ -192,6 +194,14 @@ const Reports = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </TableCell>
+            <TableCell>
+              <span
+                className="bg-black px-4 py-1 text-white rounded-lg"
+                onClick={() => navigate(`/pdf/${report._id}`)}
+              >
+                Make PDF
+              </span>
             </TableCell>
           </TableRow>
         )}

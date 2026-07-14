@@ -22,7 +22,7 @@ function TableLayout<T extends { createdAt?: string }>({
   renderRow,
   caption,
 }: TableLayoutProps<T>) {
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc"); // ← newest first by default
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const sortedData = [...data].sort((a, b) => {
     const dateA = new Date(a.createdAt ?? 0).getTime();
