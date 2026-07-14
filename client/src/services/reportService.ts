@@ -18,6 +18,22 @@ export const getReports = async (token: string): Promise<Report[]> => {
   return data.reports;
 };
 
+export const getReport = async (token: string, id: string): Promise<Report> => {
+  const response = await fetch(`${API_BASE_URL}/api/reports/${id}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Something went wrong");
+  }
+  return data.report;
+};
+
 export const patchStatus = async (
   token: string,
   reportId: string,

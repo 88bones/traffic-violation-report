@@ -1,3 +1,5 @@
+import { useAppSelector } from "@/redux/hooks";
+import { getReport } from "@/services/reportService";
 import {
   Document,
   Page,
@@ -7,6 +9,7 @@ import {
   View,
 } from "@react-pdf/renderer";
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 const MyDocument = () => (
   <Document>
@@ -31,8 +34,25 @@ const styles = StyleSheet.create({
 });
 
 const PdfViewer = () => {
+  const { token } = useAppSelector((state) => state.auth);
+
   const { id } = useParams();
   console.log(id);
+
+  const {
+    data: report,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["reports"],
+    queryFn: () => getReport(token!, id!),
+    enabled: !!token,
+  });
+
+  if (isLoading) return <p className="p-10 text-center">Loading...</p>;
+  if (error) return <p className="text-red-500">{(error as Error).message}</p>;
+
+  console.log(report);
 
   return (
     <PDFViewer>
