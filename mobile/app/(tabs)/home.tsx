@@ -24,7 +24,7 @@ export default function HomeScreen() {
     (state) => (state.auth as any)._persist?.rehydrated,
   );
   const dispatch = useAppDispatch();
-  console.log(user);
+  //console.log(user);
 
   const [refreshing, setRefreshing] = useState(false);
 

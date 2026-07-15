@@ -18,6 +18,7 @@ import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import MapView, { Marker, Region } from "react-native-maps";
 import { useLocation, NEPAL_REGION } from "@/hooks/useLocation";
+import Constants from "expo-constants";
 import { useReportForm } from "@/hooks/useReportForm";
 
 const violations = [
@@ -143,26 +144,50 @@ export default function PreviewScreen() {
             </View>
           )}
 
-          {mapView && (
-            <View style={styles.mapContainer}>
-              <MapView
-                ref={mapRef}
-                style={styles.map}
-                initialRegion={NEPAL_REGION}
-                minZoomLevel={6}
-                maxZoomLevel={15}
-                onRegionChangeComplete={onRegionChangeComplete}
-              >
-                {pin && (
-                  <Marker
-                    coordinate={pin}
-                    title="Violation Location"
-                    pinColor="red"
-                  />
-                )}
-              </MapView>
-            </View>
-          )}
+          {mapView &&
+            (() => {
+              const googleMapsApiKey =
+                Constants.expoConfig?.extra?.googleMapsApiKey ??
+                process.env.GOOGLE_MAPS_API_KEY;
+
+              if (Platform.OS === "android" && !googleMapsApiKey) {
+                return (
+                  <View style={styles.mapContainer}>
+                    <View style={styles.mapPlaceholder}>
+                      <Text style={{ color: COLORS.dark }}>
+                        Map unavailable on Android without a Google Maps API
+                        key.
+                      </Text>
+                      <Text style={{ color: COLORS.dark, marginTop: 6 }}>
+                        Add `expo.extra.googleMapsApiKey` in app.json and
+                        rebuild.
+                      </Text>
+                    </View>
+                  </View>
+                );
+              }
+
+              return (
+                <View style={styles.mapContainer}>
+                  <MapView
+                    ref={mapRef}
+                    style={styles.map}
+                    initialRegion={NEPAL_REGION}
+                    minZoomLevel={6}
+                    maxZoomLevel={15}
+                    onRegionChangeComplete={onRegionChangeComplete}
+                  >
+                    {pin && (
+                      <Marker
+                        coordinate={pin}
+                        title="Violation Location"
+                        pinColor="red"
+                      />
+                    )}
+                  </MapView>
+                </View>
+              );
+            })()}
 
           <TouchableOpacity
             style={styles.button}
@@ -259,6 +284,13 @@ const styles = StyleSheet.create({
     borderColor: COLORS.darkblue,
     borderRadius: 8,
     overflow: "hidden",
+    backgroundColor: "#fff",
+  },
+  mapPlaceholder: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 12,
     backgroundColor: "#fff",
   },
   map: {

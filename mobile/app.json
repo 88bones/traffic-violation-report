@@ -24,6 +24,7 @@
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "package": "com.x88bones.mobile",
+      "usesCleartextTraffic": true,
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
@@ -80,7 +81,9 @@
     },
     "extra": {
       "router": {},
-      "eas": {
+      "apiBaseUrl": "http://localhost:3000",
+      "androidApiBaseUrl":"http://192.168.1.85:3000",
+        "eas": {
         "projectId": "75c6332e-bac2-4709-8817-2758638d4b31"
       }
     },

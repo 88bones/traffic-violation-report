@@ -51,7 +51,6 @@ export default function SignInScreen() {
         err?.response?.data?.message ||
         err?.message ||
         "An error occurred. Please try again.";
-      console.error(err);
       Alert.alert(errorMessage);
     } finally {
       setIsLoading(false);

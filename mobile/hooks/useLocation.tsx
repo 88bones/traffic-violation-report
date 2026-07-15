@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { searchLocation } from "@/services/locationSearchService";
 import MapView, { Region } from "react-native-maps";
+import { InteractionManager } from "react-native";
 
 export const NEPAL_REGION: Region = {
   latitude: 28.3949,
@@ -26,7 +27,7 @@ export function useLocation() {
   const [locationName, setLocationName] = useState("");
   const [mapView, setMapView] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<MapView | null>(null);
 
   const onRegionChangeComplete = (region: Region) => {
     const isOutside =
@@ -60,24 +61,42 @@ export function useLocation() {
   };
 
   const selectLocation = (item: any) => {
-    const lat = parseFloat(item.lat);
-    const lng = parseFloat(item.lon);
+    const lat = Number(item.lat ?? item.latitude ?? item.latString);
+    const lng = Number(item.lon ?? item.longitude ?? item.lngString);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      console.warn("selectLocation: invalid coordinates", item);
+      return;
+    }
 
     setPin({ latitude: lat, longitude: lng });
-    setLocationName(item.display_name);
-    setSearch(item.display_name);
+    setLocationName(item.display_name ?? item.name ?? "");
+    setSearch(item.display_name ?? "");
     setResults([]);
     setMapView(true);
 
-    mapRef.current?.animateToRegion(
-      {
-        latitude: lat,
-        longitude: lng,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      },
-      500,
-    );
+    // Wait until interactions finish so MapView is mounted and ready on Android
+    InteractionManager.runAfterInteractions(() => {
+      try {
+        const animateFn = (mapRef.current as any)?.animateToRegion;
+        if (typeof animateFn === "function") {
+          animateFn.call(
+            mapRef.current,
+            {
+              latitude: lat,
+              longitude: lng,
+              latitudeDelta: 0.05,
+              longitudeDelta: 0.05,
+            },
+            500,
+          );
+        } else {
+          console.warn("animateToRegion not available on mapRef.current");
+        }
+      } catch (err) {
+        console.warn("animateToRegion failed", err);
+      }
+    });
   };
 
   return {
