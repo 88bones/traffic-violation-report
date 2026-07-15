@@ -198,7 +198,7 @@ const Reports = () => {
             <TableCell>
               <span
                 className="bg-black px-4 py-1 text-white rounded-lg"
-                onClick={() => navigate(`/pdf/${report._id}`)}
+                onClick={() => window.open(`/pdf/${report._id}`, "_blank")}
               >
                 Make PDF
               </span>
