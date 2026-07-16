@@ -12,6 +12,7 @@ import Layout from "./components/layouts/Layout";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import PdfViewer from "./components/layouts/PdfViewer";
+import FlaggedPlates from "./pages/FlaggedPlates";
 
 function AppWrapper() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route index element={<DashBoard />} />
           <Route path="reports" element={<Reports />} />
           <Route path="users" element={<Users />} />
+          <Route path="flagged-plates" element={<FlaggedPlates />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/pdf/:id" element={<PdfViewer />} />

@@ -58,3 +58,28 @@ export const patchStatus = async (
     throw err;
   }
 };
+
+export const getFlaggedPlates = async (token: string) => {
+  const response = await fetch(`${API_BASE_URL}/api/reports/flagged`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  const data = await response.json();
+  return data.flagged;
+};
+
+export const checkPlate = async (token: string, number_plate: string) => {
+  const response = await fetch(
+    `${API_BASE_URL}/api/reports/plate/${number_plate}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  const data = await response.json();
+  return data;
+};

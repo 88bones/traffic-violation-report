@@ -26,6 +26,6 @@ router.get("/nearby", authMiddleware, getNearbyReports);
 
 // duplicate plates
 router.get("/plate/:number_plate", authMiddleware, checkDuplicatePlate);
-router.get("flagged", authMiddleware, getAllFlaggedPlate);
+router.get("/flagged", authMiddleware, getAllFlaggedPlate);
 
 export default router;

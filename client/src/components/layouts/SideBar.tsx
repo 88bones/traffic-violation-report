@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, Users, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, Users, LogOut, Flag } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { logout } from "@/redux/slice";
@@ -19,6 +19,7 @@ const menuItems = [
   { title: "Dashboard", icon: LayoutDashboard, path: "/" },
   { title: "Reports", icon: FileText, path: "/reports" },
   { title: "Users", icon: Users, path: "/users" },
+  { title: "Flagged Plates", icon: Flag, path: "/flagged-plates" },
 ];
 
 export default function AppSidebar() {
