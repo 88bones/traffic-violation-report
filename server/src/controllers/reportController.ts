@@ -82,7 +82,9 @@ const getReports = async (req: AuthRequest, res: Response): Promise<void> => {
       return;
     }
 
-    const reports = await Report.find({ reportedBy: userId });
+    const reports = await Report.find({ reportedBy: userId }).sort({
+      createdAt: -1,
+    });
     res.status(200).json({ reports });
   } catch (err) {
     const error = err as Error;

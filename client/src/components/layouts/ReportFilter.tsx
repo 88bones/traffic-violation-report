@@ -98,7 +98,9 @@ const ReportFilter = ({
       {locationName && (
         <div className="flex items-center gap-4 mt-6">
           <FieldSet className="w-full max-w-xs">
-            <FieldLegend variant="label">Your Location:</FieldLegend>
+            <FieldLegend variant="label" className="font-semibold">
+              Your Location:
+            </FieldLegend>
             <FieldDescription>
               {locationName.split("-")[0].trim()}
             </FieldDescription>
@@ -109,30 +111,33 @@ const ReportFilter = ({
                 console.log("Selected radius:", val);
               }}
             >
-              <Field orientation="horizontal">
-                <RadioGroupItem value="20" id="20" />
-                <FieldLabel htmlFor="20" className="font-normal">
-                  Radius 20KM
-                </FieldLabel>
-              </Field>
-              <Field orientation="horizontal">
-                <RadioGroupItem value="40" id="40" />
-                <FieldLabel htmlFor="40" className="font-normal">
-                  Radius 40KM
-                </FieldLabel>
-              </Field>
-              <Field orientation="horizontal">
-                <RadioGroupItem value="60" id="60" />
-                <FieldLabel htmlFor="60" className="font-normal">
-                  Radius 60KM
-                </FieldLabel>
-              </Field>
-              <Field orientation="horizontal">
-                <RadioGroupItem value="all" id="all" />
-                <FieldLabel htmlFor="all" className="font-normal">
-                  All
-                </FieldLabel>
-              </Field>
+              <p className="font-semibold">Choose radius: </p>
+              <div className="flex gap-2">
+                <Field orientation="horizontal">
+                  <RadioGroupItem value="20" id="20" />
+                  <FieldLabel htmlFor="20" className="font-normal">
+                    20KM
+                  </FieldLabel>
+                </Field>
+                <Field orientation="horizontal">
+                  <RadioGroupItem value="40" id="40" />
+                  <FieldLabel htmlFor="40" className="font-normal">
+                    40KM
+                  </FieldLabel>
+                </Field>
+                <Field orientation="horizontal">
+                  <RadioGroupItem value="60" id="60" />
+                  <FieldLabel htmlFor="60" className="font-normal">
+                    60KM
+                  </FieldLabel>
+                </Field>
+                <Field orientation="horizontal">
+                  <RadioGroupItem value="all" id="all" />
+                  <FieldLabel htmlFor="all" className="font-normal">
+                    All
+                  </FieldLabel>
+                </Field>
+              </div>
             </RadioGroup>
           </FieldSet>
         </div>

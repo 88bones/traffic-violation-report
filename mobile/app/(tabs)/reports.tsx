@@ -96,7 +96,6 @@ export default function ReportScreen() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-
   const actionButtons = [
     {
       id: "close-btn",
