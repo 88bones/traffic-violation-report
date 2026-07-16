@@ -16,6 +16,7 @@ import { getNearbyReports } from "../controllers/nearbyReports.js";
 const router = express.Router();
 
 router.post("/", authMiddleware, upload.single("image"), createReport);
+router.get("/flagged", authMiddleware, getAllFlaggedPlate);
 
 router.get("/", authMiddleware, getReports);
 router.get("/:reportId", authMiddleware, getReport);
@@ -23,9 +24,6 @@ router.delete("/:reportId", authMiddleware, deleteReport);
 router.patch("/:reportId", authMiddleware, patchReportStatus);
 router.put("/:reportId", authMiddleware, upload.single("image"), updateReport);
 router.get("/nearby", authMiddleware, getNearbyReports);
-
-// duplicate plates
 router.get("/plate/:number_plate", authMiddleware, checkDuplicatePlate);
-router.get("/flagged", authMiddleware, getAllFlaggedPlate);
 
 export default router;

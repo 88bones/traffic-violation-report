@@ -11,6 +11,7 @@ export default function FlaggedPlates() {
     queryFn: () => getFlaggedPlates(token!),
     enabled: !!token,
   });
+  console.log(flagged);
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;
 
