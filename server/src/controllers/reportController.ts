@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Report from "../models/reportModel.js";
-import { AuthRequest } from "../types/model.types.js";
+import { AuthRequest, IUser } from "../types/model.types.js";
 import Notification from "../models/notificationModel.js";
 import User from "../models/userModel.js";
 import { sendPushNotification } from "../utils/pushNotification.js";
@@ -34,6 +34,34 @@ const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
     });
 
     await newReport.save();
+
+    //check for duplicate plates
+    const normalisedPlate = (number_plate as string)
+      .replace(/\s/g, "")
+      .toUpperCase();
+    const existingCount = await Report.countDocuments({
+      number_plate: { $regex: new RegExp(`^${normalisedPlate}$`, `i`) },
+    });
+
+    //create notification for admin
+    if (existingCount >= 3) {
+      const admin = (await User.findOne({ role: "admin" })) as
+        | (IUser & Document)
+        | null;
+
+      if (!admin) {
+        console.error("No admin found");
+        return;
+      } else {
+        await Notification.create({
+          userId: admin.id,
+          reportId: newReport._id,
+          title: "Report Status Updated",
+          message: `Plate ${number_plate} has been reported ${existingCount} times.}`,
+          isRead: false,
+        });
+      }
+    }
 
     res.status(201).json({
       message: "Report submitted successfully.",
