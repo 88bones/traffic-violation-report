@@ -201,6 +201,84 @@ const patchReportStatus = async (
   }
 };
 
+// check DUPLICATE plates
+const checkDuplicatePlate = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { number_plate } = req.params;
+
+    const normalisedPlate = (number_plate as string)
+      .replace(/\s/g, "")
+      .toUpperCase();
+
+    const reports = await Report.find({
+      number_plate: { $regex: new RegExp(normalisedPlate, "i") },
+    }).sort({ createdAt: -1 });
+
+    const count = reports.length;
+    const isFlagged = count >= 3;
+
+    res.status(200).json({
+      number_plate: normalisedPlate,
+      reports,
+      isFlagged,
+      count,
+    });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ message: error.message });
+  }
+};
+
+//get all FLAGGED
+const getAllFlaggedPlate = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const flagged = await Report.aggregate([
+      {
+        // normalize plate by removing spaces
+        $addFields: {
+          normalizedPlate: {
+            $toUpper: {
+              $replaceAll: {
+                input: "$number_plate",
+                find: " ",
+                replacement: "",
+              },
+            },
+          },
+        },
+      },
+      {
+        // group by normalized plate
+        $group: {
+          _id: "$normalizedPlate",
+          count: { $sum: 1 },
+          reports: { $push: "$$ROOT" },
+          latestReport: { $last: "$$ROOT" },
+          violations: { $addToSet: "$violation" },
+        },
+      },
+      {
+        // plates with 3+ reports
+        $match: { count: { $gte: 3 } },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+
+    res.status(200).json({ flagged });
+  } catch (err) {
+    const error = err as Error;
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   createReport,
   getReports,
@@ -208,4 +286,6 @@ export {
   deleteReport,
   updateReport,
   patchReportStatus,
+  checkDuplicatePlate,
+  getAllFlaggedPlate,
 };

@@ -6,6 +6,8 @@ import {
   deleteReport,
   updateReport,
   patchReportStatus,
+  checkDuplicatePlate,
+  getAllFlaggedPlate,
 } from "../controllers/reportController.js";
 import upload from "./../middleware/upload.js";
 import authMiddleware from "./../middleware/authMiddleware.js";
@@ -21,5 +23,9 @@ router.delete("/:reportId", authMiddleware, deleteReport);
 router.patch("/:reportId", authMiddleware, patchReportStatus);
 router.put("/:reportId", authMiddleware, upload.single("image"), updateReport);
 router.get("/nearby", authMiddleware, getNearbyReports);
+
+// duplicate plates
+router.get("/plate/:number_plate", authMiddleware, checkDuplicatePlate);
+router.get("flagged", authMiddleware, getAllFlaggedPlate);
 
 export default router;
