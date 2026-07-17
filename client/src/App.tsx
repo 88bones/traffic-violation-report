@@ -13,6 +13,7 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import PdfViewer from "./components/layouts/PdfViewer";
 import FlaggedPlates from "./pages/FlaggedPlates";
+import Hotspot from "./pages/Hotspot";
 
 function AppWrapper() {
   return (
@@ -39,6 +40,7 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="users" element={<Users />} />
           <Route path="flagged-plates" element={<FlaggedPlates />} />
+          <Route path="hotspot" element={<Hotspot />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/pdf/:id" element={<PdfViewer />} />

@@ -144,7 +144,7 @@ export default function PreviewScreen() {
             </View>
           )}
 
-          {/* {mapView && (
+          {mapView && (
             <View style={styles.mapContainer}>
               <MapView
                 ref={mapRef}
@@ -153,10 +153,9 @@ export default function PreviewScreen() {
                 minZoomLevel={6}
                 maxZoomLevel={15}
                 onRegionChangeComplete={onRegionChangeComplete}
-                mapType="none" // ← disable default Google/Apple tiles
+                mapType="none" // ← add this
               >
-            
-                <UrlTile
+                <UrlTile // ← add this
                   urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                   maximumZ={19}
                   flipY={false}
@@ -170,7 +169,7 @@ export default function PreviewScreen() {
                 )}
               </MapView>
             </View>
-          )} */}
+          )}
 
           <TouchableOpacity
             style={styles.button}

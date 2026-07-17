@@ -24,6 +24,11 @@
       "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "package": "com.x88bones.mobile",
+      "config":{
+        "googleMaps": {
+          "apiKey": ""
+        }
+      },
       "usesCleartextTraffic": true,
       "permissions": [
         "android.permission.CAMERA",

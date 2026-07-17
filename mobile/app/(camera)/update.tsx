@@ -160,7 +160,7 @@ export default function UpdateScreen() {
             </View>
           )}
 
-          {/* {mapView && (
+          {mapView && (
             <View style={styles.mapContainer}>
               <MapView
                 ref={mapRef}
@@ -179,7 +179,7 @@ export default function UpdateScreen() {
                 )}
               </MapView>
             </View>
-          )} */}
+          )}
           <TouchableOpacity
             style={styles.button}
             onPress={() => handleSubmit(pin!, locationName)}
