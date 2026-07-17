@@ -8,9 +8,8 @@ const getApiUrl = () => {
     return Constants.expoConfig?.extra?.apiBaseUrl ?? "http://localhost:3000";
   }
   // ← Android physical device needs real IP
-  return (
-    Constants.expoConfig?.extra?.androidApiBaseUrl ?? "http://192.168.1.85:3000"
-  );
+  return Constants.expoConfig?.extra?.androidApiBaseUrl;
+  // ?? "http://192.168.1.65:3000"
 };
 
 const API_BASE_URL = getApiUrl();
