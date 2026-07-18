@@ -118,14 +118,14 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 60,
+    height: 65,
     borderTopWidth: 0,
     elevation: 0,
     position: "relative",
   },
   buttonContainer: {
     position: "absolute",
-    bottom: 15,
+    bottom: 2,
     alignSelf: "center",
     zIndex: 1,
     borderRadius: 40,
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: COLORS.dark,
     shadowOffset: {
       width: 0,
       height: 4,
