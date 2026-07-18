@@ -17,10 +17,10 @@ import { setReports } from "@/redux/reportSlice";
 import { ScrollView } from "react-native-gesture-handler";
 
 const LEGENDS = [
-  { label: "Drunk Driving", color: "#b91c1c" },
-  { label: "Reckless Driving", color: "#ea580c" },
-  { label: "Running Red Light", color: "#ca8a04" },
-  { label: "Speeding", color: "#2563eb" },
+  { label: "Drunk Driving", value: "drunk_driving", color: "#b91c1c" },
+  { label: "Reckless Driving", value: "reckless_driving", color: "#ea580c" },
+  { label: "Running Red Light", value: "running_red_light", color: "#ca8a04" },
+  { label: "Speeding", value: "speeding", color: "#2563eb" },
 ];
 
 export default function HotspotScreen() {
@@ -34,9 +34,9 @@ export default function HotspotScreen() {
     (r) => r.location?.latitude && r.location?.longitude,
   );
 
-  const getColorForViolation = (violationType: string) => {
+  const getColorForViolation = (violation: string) => {
     const match = LEGENDS.find(
-      (l) => l.label.toLowerCase() === violationType?.toLowerCase(),
+      (l) => l.value.toLowerCase() === violation?.toLowerCase(),
     );
     return match ? match.color : COLORS.blue;
   };
