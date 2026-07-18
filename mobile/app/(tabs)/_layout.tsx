@@ -64,12 +64,12 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="rewards"
+        name="hotspots"
         options={{
-          title: "Rewards",
+          title: "Hotspots",
           tabBarIcon: ({ color, size, focused }) => (
             <Ionicons
-              name={focused ? "medal" : "medal-outline"}
+              name={focused ? "map" : "map-outline"}
               size={size}
               color={color}
             />

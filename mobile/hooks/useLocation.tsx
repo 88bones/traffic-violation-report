@@ -10,7 +10,7 @@ export const NEPAL_REGION: Region = {
   longitudeDelta: 6.0,
 };
 
-const NEPAL_BOUNDS = {
+export const NEPAL_BOUNDS = {
   minLat: 26.3,
   maxLat: 30.4,
   minLng: 80.0,
