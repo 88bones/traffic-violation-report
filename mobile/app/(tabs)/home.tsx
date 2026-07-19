@@ -16,10 +16,14 @@ import { getReports } from "@/services/reportService";
 import ReportCard from "@/components/ReportCard";
 import DoughnutChart from "@/components/DoughnutChart";
 import { useRouter } from "expo-router";
+import { getNotifications } from "@/services/notificationService";
+import { setNotifications } from "@/redux/notificationSlice";
 
 export default function HomeScreen() {
   const { user, token } = useAppSelector((state) => state.auth);
   const { reports, isLoading } = useAppSelector((state) => state.reports);
+  const { unreadCount } = useAppSelector((state) => state.notifications);
+
   const isRehydrated = useAppSelector(
     (state) => (state.auth as any)._persist?.rehydrated,
   );
@@ -52,11 +56,37 @@ export default function HomeScreen() {
     setRefreshing(true);
     try {
       const data = await getReports(token!);
+      const notification = await getNotifications(token!);
       dispatch(setReports(data));
+      dispatch(
+        setNotifications({
+          notifications: notification.notifications,
+          unreadCount: notification.unreadCount,
+        }),
+      );
     } catch (err: any) {
       Alert.alert("Error", err.message);
     }
     setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  useEffect(() => {
+    if (!token) return;
+    fetchNotifications();
+  }, [token]);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await getNotifications(token!);
+      dispatch(
+        setNotifications({
+          notifications: data.notifications,
+          unreadCount: data.unreadCount,
+        }),
+      );
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
@@ -70,7 +100,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <Text style={styles.heading}>Hi, {user?.name.split(" ")[0]}</Text>
           <MaterialCommunityIcons
-            name="bell-outline"
+            name={unreadCount ? "bell-badge" : "bell-outline"}
             size={24}
             color={COLORS.blue}
             style={styles.notification}
