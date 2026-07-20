@@ -21,8 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
 
 const statuses = [
   { label: "Pending", value: "pending" },
@@ -60,13 +58,10 @@ const Reports = () => {
   const [viewingReport, setViewingReport] = useState<Report | null>(null);
   const [selectedRadius, setSelectedRadius] = useState<number | "all">("all");
 
-  const { locationName, longitude, latitude } = useAppSelector(
-    (state) => state.location,
-  );
+  const { longitude, latitude } = useAppSelector((state) => state.location);
   // console.log({ locationName, longitude, latitude });
 
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   const {
     data: reports,
