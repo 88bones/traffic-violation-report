@@ -1,6 +1,6 @@
 import { COLORS, StatusColors } from "@/constant/colors";
 import { Report } from "@/types/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -92,6 +92,11 @@ export default function ReportScreen() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const ITEMS_PER_PAGE = 5;
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [paginatedReports, setPaginatedReports] = useState<Report[]>([]);
 
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -148,14 +153,46 @@ export default function ReportScreen() {
   //handle refresh
   const handleRefresh = async () => {
     setRefreshing(true);
+    setPage(1);
+    setHasMore(true);
     try {
       const data = await getReports(token!);
+      const newItems = data.slice(0, ITEMS_PER_PAGE);
+      setPaginatedReports(newItems);
+      setPage(2);
+      if (newItems.length < ITEMS_PER_PAGE) setHasMore(false);
       dispatch(setReports(data));
     } catch (err: any) {
       Alert.alert("Error", err.message);
+    } finally {
+      setTimeout(() => setRefreshing(false), 5000);
     }
-    setTimeout(() => setRefreshing(false), 1000);
   };
+
+  // loading items
+  const loadMoreItems = async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const data = await getReports(token!);
+      const start = (page - 1) * ITEMS_PER_PAGE;
+      const end = page * ITEMS_PER_PAGE;
+      const newItems = data.slice(start, end);
+
+      if (newItems.length < ITEMS_PER_PAGE) setHasMore(false);
+      setPaginatedReports((prev) => [...prev, ...newItems]);
+      setPage((prev) => prev + 1);
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    loadMoreItems();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -164,13 +201,26 @@ export default function ReportScreen() {
         <ActivityIndicator size={24} color={COLORS.blue} />
       ) : (
         <FlatList
-          data={reports}
+          data={paginatedReports}
           renderItem={({ item }) => (
             <Item item={item} onPress={() => handlePress(item)} />
           )}
           refreshing={refreshing}
           onRefresh={handleRefresh}
           keyExtractor={(item) => item._id}
+          onEndReached={loadMoreItems}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator
+                size={24}
+                color={COLORS.blue}
+                style={{ padding: 16 }}
+              />
+            ) : !hasMore ? (
+              <Text style={styles.endText}>No more reports</Text>
+            ) : null
+          }
         />
       )}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
@@ -435,5 +485,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#333",
     lineHeight: 20,
+  },
+  endText: {
+    textAlign: "center",
+    color: "#999",
+    padding: 16,
+    fontSize: 13,
   },
 });
