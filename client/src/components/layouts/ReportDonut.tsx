@@ -1,4 +1,5 @@
-import { Pie, PieChart, Cell } from "recharts";
+import React, { useMemo } from "react";
+import { Label, Pie, PieChart } from "recharts";
 
 import {
   Card,
@@ -42,51 +43,52 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function ReportDonut({ reports }: ReportDonutProps) {
-  const total = reports.length;
-  const speeding = reports.filter((r) => r.violation === "speeding").length;
-  const runningRedLight = reports.filter(
-    (r) => r.violation === "running_red_light",
-  ).length;
-  const drunkDriving = reports.filter(
-    (r) => r.violation === "drunk_driving",
-  ).length;
-  const recklessDriving = reports.filter(
-    (r) => r.violation === "reckless_driving",
-  ).length;
+  const { chartData, total } = useMemo(() => {
+    const counts = {
+      speeding: 0,
+      running_red_light: 0,
+      drunk_driving: 0,
+      reckless_driving: 0,
+    };
 
-  const divisor = total === 0 ? 1 : total;
+    reports.forEach((r) => {
+      if (r.violation in counts) {
+        counts[r.violation as keyof typeof counts]++;
+      }
+    });
 
-  const speedingPct = Math.round((speeding / divisor) * 100);
-  const redLightPct = Math.round((runningRedLight / divisor) * 100);
-  const drunkPct = Math.round((drunkDriving / divisor) * 100);
-  const recklessPct = Math.round((recklessDriving / divisor) * 100);
+    const totalCount = reports.length;
+    const divisor = totalCount === 0 ? 1 : totalCount;
 
-  const chartData = [
-    {
-      violation: "speeding",
-      value: speeding,
-      percentage: `${speedingPct}%`,
-      fill: chartConfig.speeding.color,
-    },
-    {
-      violation: "running_red_light",
-      value: runningRedLight,
-      percentage: `${redLightPct}%`,
-      fill: chartConfig.running_red_light.color,
-    },
-    {
-      violation: "drunk_driving",
-      value: drunkDriving,
-      percentage: `${drunkPct}%`,
-      fill: chartConfig.drunk_driving.color,
-    },
-    {
-      violation: "reckless_driving",
-      value: recklessDriving,
-      percentage: `${recklessPct}%`,
-      fill: chartConfig.reckless_driving.color,
-    },
-  ].filter((item) => item.value > 0);
+    const data = [
+      {
+        violation: "Speeding",
+        value: counts.speeding,
+        percentage: `${Math.round((counts.speeding / divisor) * 100)}%`,
+        fill: chartConfig.speeding.color,
+      },
+      {
+        violation: "Running Red Light",
+        value: counts.running_red_light,
+        percentage: `${Math.round((counts.running_red_light / divisor) * 100)}%`,
+        fill: chartConfig.running_red_light.color,
+      },
+      {
+        violation: "Drunk Driving",
+        value: counts.drunk_driving,
+        percentage: `${Math.round((counts.drunk_driving / divisor) * 100)}%`,
+        fill: chartConfig.drunk_driving.color,
+      },
+      {
+        violation: "Reckless Driving",
+        value: counts.reckless_driving,
+        percentage: `${Math.round((counts.reckless_driving / divisor) * 100)}%`,
+        fill: chartConfig.reckless_driving.color,
+      },
+    ].filter((item) => item.value > 0);
+
+    return { chartData: data, total: totalCount };
+  }, [reports]);
 
   return (
     <Card className="flex flex-col">
@@ -94,10 +96,10 @@ export default function ReportDonut({ reports }: ReportDonutProps) {
         <CardTitle>Violation Breakdown</CardTitle>
         <CardDescription>Traffic Reports Overview</CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
+      <CardContent className="flex-1 pb-4">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto aspect-square max-h-[260px]"
         >
           <PieChart>
             <ChartTooltip
@@ -108,26 +110,56 @@ export default function ReportDonut({ reports }: ReportDonutProps) {
               data={chartData}
               dataKey="value"
               nameKey="violation"
-              innerRadius={60}
+              innerRadius={70}
+              outerRadius={95}
               strokeWidth={2}
-            />
+            >
+              {/* Option A: Native Recharts Center Label (Shows Total inside Donut Hole) */}
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                      >
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          className="fill-foreground text-3xl font-bold"
+                        >
+                          {total.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 20}
+                          className="fill-muted-foreground text-xs"
+                        >
+                          Total Reports
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            </Pie>
           </PieChart>
         </ChartContainer>
-        <div>Legend</div>
-        <div>
-          {chartData.map((data, index) => (
-            <div key={index}>
-              <div
-                style={{
-                  backgroundColor: data.fill,
-                  width: 20,
-                  height: 20,
-                  display: "inline-block",
-                }}
-              ></div>
-              <span>
-                {data.violation} - {data.percentage}
+
+        {/* Clean Modern Legend Below Chart */}
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+          {chartData.map((data) => (
+            <div key={data.violation} className="flex items-center gap-2">
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: data.fill }}
+              />
+              <span className="text-muted-foreground truncate">
+                {data.violation}
               </span>
+              <span className="ml-auto font-medium">{data.percentage}</span>
             </div>
           ))}
         </div>

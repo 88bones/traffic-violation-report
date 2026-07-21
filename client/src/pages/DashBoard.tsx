@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import ReportDonut from "@/components/layouts/ReportDonut";
 import { useQuery } from "@tanstack/react-query";
 import { getReports } from "@/services/reportService";
+import ReportCard from "@/components/layouts/ReportCard";
 
 // const headers = ["#", "Name", "Email", "Phone"];
 
@@ -35,7 +36,10 @@ const DashBoard = () => {
       <h1 className="text-2xl font-bold">DashBoARD</h1>
       {isLocating && <p>Getting location...</p>}
       {locationName && <p>{locationName.split("-")[0].trim()}</p>}
-      <ReportDonut reports={reports!} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        <ReportDonut reports={reports!} />
+        <ReportCard reports={reports!} />
+      </div>
     </div>
   );
 };
