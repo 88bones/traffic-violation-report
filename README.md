@@ -3,48 +3,46 @@
 ## ✨ Features
 
 ### Mobile App (Citizens)
-- 📷 Camera with pinch-to-zoom and tap-to-focus
-- 🖼️ Image picker from gallery
-- 📋 Submit violation reports with image, number plate, violation type, description and location
-- 🗺️ Interactive map with OpenStreetMap (no API key required)
-- 🔍 Location search using Nominatim (free, no API key)
-- 📍 Nepal-restricted map with snap-back boundary logic
-- 🔔 Push notifications via Expo + Firebase FCM
-- 🔔 In-app notification center with unread badge
-- 📊 Personal dashboard with report stats and doughnut chart
-- 🗺️ Violation hotspot map with DBSCAN clustering
-- 📄 View, edit, and delete submitted reports
-- 🔐 JWT authentication with persistent login via Redux Persist
-- ♾️ Infinite scroll pagination on reports list
-- 🔄 Pull to refresh
+-  Camera with pinch-to-zoom and tap-to-focus
+-  Image picker from gallery
+-  Submit violation reports with image, number plate, violation type, description and location
+-  Interactive map with OpenStreetMap (no API key required)
+-  Location search using Nominatim (free, no API key)
+-  Nepal-restricted map with snap-back boundary logic
+-  Push notifications via Expo + Firebase FCM
+-  In-app notification center with unread badge
+-  Personal dashboard with report stats and doughnut chart
+-  Violation hotspot map with DBSCAN clustering
+-  View, edit, and delete submitted reports
+-  JWT authentication with persistent login via Redux Persist
+-  Infinite scroll pagination on reports list
+-  Pull to refresh
 
 ### Admin Dashboard (Authorities)
-- 📊 Dashboard with report statistics
-- 📋 Reports table with filtering by status, violation type and radius
-- 📍 Distance filter using Haversine algorithm (20km / 40km / 60km / All)
-- 🗺️ Violation hotspot map with Leaflet + MarkerClusterGroup
-- ⚠️ Flagged plates — vehicles reported 3+ times
-- 🔄 Update report status (Pending / Approved / Rejected)
-- 📄 Export individual reports as PDF
-- 📅 Sort reports by date
-- 🔐 Protected routes — admin only access
-- 💾 Persistent login via localStorage + Redux
+-  Dashboard with report statistics
+-  Reports table with filtering by status, violation type and radius
+-  Distance filter using Haversine algorithm (20km / 40km / 60km / All)
+-  Violation hotspot map with Leaflet + MarkerClusterGroup
+-  Flagged plates — vehicles reported 3+ times
+-  Update report status (Pending / Approved / Rejected)
+-  Export individual reports as PDF
+-  Sort reports by date
+-  Persistent login via localStorage + Redux
 
 ### Backend API
-- 🔐 JWT authentication with bcrypt password hashing
-- 📁 Image upload via Multer
-- 🔔 Push notifications via Expo Push API + Firebase
-- 📬 In-app notifications on status change
-- ⚠️ Duplicate plate detection with MongoDB aggregation
-- 🌍 Nearby reports via Haversine distance filtering
-- 📄 Paginated reports endpoint
-- 🐳 Docker + Docker Compose support
+-  JWT authentication with bcrypt password hashing
+-  Image upload via Multer
+-  Push notifications via Expo Push API + Firebase
+-  In-app notifications on status change
+-  Duplicate plate detection with MongoDB aggregation
+-  Nearby reports via Haversine distance filtering
+-  Paginated reports endpoint
 
 ### OCR Service (Python)
-- 🔍 Nepali number plate character recognition
-- 🧠 TensorFlow CNN model trained on Kaggle dataset (34 character classes)
-- 🖼️ OpenCV image preprocessing and character segmentation
-- 🌐 Flask REST API
+-  Nepali number plate character recognition
+-  TensorFlow CNN model trained on Kaggle dataset (34 character classes)
+-  OpenCV image preprocessing and character segmentation
+-  Flask REST API
 
 ---
 
@@ -184,7 +182,7 @@ python ocr_server.py
 
 ---
 
-## 🧮 Algorithms Used
+## Algorithms Used
 
 | Algorithm | Purpose |
 |---|---|
