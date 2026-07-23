@@ -5,7 +5,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/redux/hooks";
 import { getReports } from "@/services/reportService";
 import { useMemo } from "react";
+import { dbscan } from "@/utils/algorithm";
 
+// leaflet icon paths
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:
@@ -27,6 +29,13 @@ const violationColor = (violation: string) => {
   }
 };
 
+const LEGENDS = [
+  { label: "Drunk Driving", value: "drunk_driving", color: "#b91c1c" },
+  { label: "Reckless Driving", value: "reckless_driving", color: "#ea580c" },
+  { label: "Running Red Light", value: "running_red_light", color: "#ca8a04" },
+  { label: "Speeding", value: "speeding", color: "#2563eb" },
+];
+
 const Hotspot = () => {
   const { token } = useAppSelector((state) => state.auth);
 
@@ -34,17 +43,21 @@ const Hotspot = () => {
     queryKey: ["reports"],
     queryFn: () => getReports(token!),
     enabled: !!token,
-    staleTime: 1000 * 6 * 5,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // const validReports = useMemo(() => {
-  //   return (reports ?? []).filter(
-  //     (r) => r.location?.latitude && r.location?.longitude,
-  //   );
-  // }, [reports]);
-  const validReports = (reports ?? []).filter(
-    (r) => r.location?.latitude && r.location?.longitude,
-  );
+  // Filter valid reports memoized
+  const validReports = useMemo(() => {
+    return (reports ?? []).filter(
+      (r) => r.location?.latitude && r.location?.longitude,
+    );
+  }, [reports]);
+
+  const clusters = useMemo(() => {
+    if (!validReports.length) return [];
+    const { clusters: calculatedClusters } = dbscan(validReports, 40, 2);
+    return calculatedClusters || [];
+  }, [validReports]);
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;
 
@@ -55,13 +68,9 @@ const Hotspot = () => {
         Map showing all reported violations across Nepal.
       </p>
 
+      {/* Legends */}
       <div className="flex gap-4 flex-wrap">
-        {[
-          { label: "Drunk Driving", color: "#b91c1c" },
-          { label: "Reckless Driving", color: "#ea580c" },
-          { label: "Running Red Light", color: "#ca8a04" },
-          { label: "Speeding", color: "#2563eb" },
-        ].map((item) => (
+        {LEGENDS.map((item) => (
           <div key={item.label} className="flex items-center gap-2">
             <div
               className="w-3 h-3 rounded-full"
@@ -72,6 +81,7 @@ const Hotspot = () => {
         ))}
       </div>
 
+      {/* Map */}
       <div className="w-full h-150 rounded-xl overflow-hidden border">
         <MapContainer
           center={[28.3949, 84.124]}
@@ -83,6 +93,33 @@ const Hotspot = () => {
             attribution="&copy; OpenStreetMap contributors"
           />
 
+          {/* clusters*/}
+          {clusters.map((cluster, i) => {
+            if (!cluster.length) return null;
+
+            const avgLat =
+              cluster.reduce((sum, r) => sum + r.location.latitude, 0) /
+              cluster.length;
+            const avgLng =
+              cluster.reduce((sum, r) => sum + r.location.longitude, 0) /
+              cluster.length;
+
+            return (
+              <Circle
+                key={`cluster-${i}`}
+                center={[avgLat, avgLng]}
+                radius={cluster.length * 800}
+                pathOptions={{
+                  color: "#ff0000",
+                  fillColor: "#ff0000",
+                  fillOpacity: 0.2,
+                  weight: 2,
+                }}
+              />
+            );
+          })}
+
+          {/* individual reports */}
           {validReports.map((report) => (
             <div key={report._id}>
               <Circle
@@ -107,7 +144,7 @@ const Hotspot = () => {
                       {report.location?.name}
                     </p>
                     <span
-                      className="text-xs px-2 py-0.5 rounded-full"
+                      className="text-xs px-2 py-0.5 rounded-full inline-block mt-1"
                       style={{
                         backgroundColor:
                           report.status === "approved"

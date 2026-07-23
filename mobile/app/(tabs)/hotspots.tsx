@@ -11,7 +11,7 @@ import MapView, { Callout, Circle, Marker } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NEPAL_REGION } from "@/hooks/useLocation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { getReports } from "@/services/reportService";
 import { setReports } from "@/redux/reportSlice";
 import { ScrollView } from "react-native-gesture-handler";
@@ -35,8 +35,12 @@ export default function HotspotScreen() {
     (r) => r.location?.latitude && r.location?.longitude,
   );
 
-  const { clusters } = dbscan(validReports, 40, 2);
-  console.log(clusters.length);
+  const clusters = useMemo(() => {
+    if (!validReports.length) return [];
+    const { clusters: calculatedClusters } = dbscan(validReports, 40, 2);
+    return calculatedClusters || [];
+  }, [validReports]);
+  // console.log(clusters.length);
 
   const getColorForViolation = (violation: string) => {
     const match = LEGENDS.find(
