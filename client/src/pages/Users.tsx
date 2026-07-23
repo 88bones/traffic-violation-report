@@ -27,6 +27,7 @@ const Users = () => {
     queryKey: ["users"],
     queryFn: () => getUsers(token!),
     enabled: !!token,
+    staleTime: 1000 * 60 * 2,
   });
 
   if (isLoading) return <p>Loading...</p>;

@@ -15,6 +15,7 @@ import { useState } from "react";
 import { getReports } from "@/services/reportService";
 import { setReports } from "@/redux/reportSlice";
 import { ScrollView } from "react-native-gesture-handler";
+import { dbscan } from "@/utils/algorithm";
 
 const LEGENDS = [
   { label: "Drunk Driving", value: "drunk_driving", color: "#b91c1c" },
@@ -33,6 +34,9 @@ export default function HotspotScreen() {
   const validReports = (reports ?? []).filter(
     (r) => r.location?.latitude && r.location?.longitude,
   );
+
+  const { clusters } = dbscan(validReports, 40, 2);
+  console.log(clusters.length);
 
   const getColorForViolation = (violation: string) => {
     const match = LEGENDS.find(
@@ -73,6 +77,28 @@ export default function HotspotScreen() {
               minZoomLevel={6}
               maxZoomLevel={18}
             >
+              {/* clusters */}
+              {clusters.map((cluster, i) => {
+                const center = {
+                  latitude:
+                    cluster.reduce((sum, r) => sum + r.location.latitude, 0) /
+                    cluster.length,
+                  longitude:
+                    cluster.reduce((sum, r) => sum + r.location.longitude, 0) /
+                    cluster.length,
+                };
+                return (
+                  <Circle
+                    key={`cluster-${i}`}
+                    center={center}
+                    radius={cluster.length * 800}
+                    strokeColor="#ff000080"
+                    fillColor="#ff000020"
+                    strokeWidth={2}
+                  />
+                );
+              })}
+              {/* report markers */}
               {validReports.map((report) => {
                 const markerColor = getColorForViolation(report.violation);
                 return (
