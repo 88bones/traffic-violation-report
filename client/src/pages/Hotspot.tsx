@@ -4,6 +4,7 @@ import L from "leaflet";
 import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/redux/hooks";
 import { getReports } from "@/services/reportService";
+import { useMemo } from "react";
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -33,8 +34,14 @@ const Hotspot = () => {
     queryKey: ["reports"],
     queryFn: () => getReports(token!),
     enabled: !!token,
+    staleTime: 1000 * 6 * 5,
   });
 
+  // const validReports = useMemo(() => {
+  //   return (reports ?? []).filter(
+  //     (r) => r.location?.latitude && r.location?.longitude,
+  //   );
+  // }, [reports]);
   const validReports = (reports ?? []).filter(
     (r) => r.location?.latitude && r.location?.longitude,
   );

@@ -54,9 +54,7 @@ const ReportFilter = ({
   setSelectedRadius,
   selectedRadius,
 }: ReportFilterProps) => {
-  const { locationName, longitude, latitude } = useAppSelector(
-    (state) => state.location,
-  );
+  const { locationName } = useAppSelector((state) => state.location);
 
   return (
     <div>

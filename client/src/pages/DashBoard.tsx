@@ -26,6 +26,7 @@ const DashBoard = () => {
     queryKey: ["reports"],
     queryFn: () => getReports(token!),
     enabled: !!token,
+    staleTime: 1000 * 60 * 5,
   });
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;

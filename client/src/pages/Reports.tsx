@@ -71,6 +71,7 @@ const Reports = () => {
     queryKey: ["reports"],
     queryFn: () => getReports(token!),
     enabled: !!token,
+    staleTime: 1000 * 60 * 5,
   });
 
   const { mutate: changeStatus } = useMutation({

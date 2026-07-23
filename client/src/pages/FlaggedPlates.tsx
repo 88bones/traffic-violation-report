@@ -10,7 +10,9 @@ export default function FlaggedPlates() {
     queryKey: ["flagged"],
     queryFn: () => getFlaggedPlates(token!),
     enabled: !!token,
+    staleTime: 1000 * 60 * 5,
   });
+
   console.log(flagged);
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;
