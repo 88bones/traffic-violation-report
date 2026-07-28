@@ -83,3 +83,17 @@ export const checkPlate = async (token: string, number_plate: string) => {
   const data = await response.json();
   return data;
 };
+
+export const deleteReport = async (token: string, reportId: string) => {
+  const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Something went wrong");
+  }
+};

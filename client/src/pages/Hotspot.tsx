@@ -6,6 +6,7 @@ import { useAppSelector } from "@/redux/hooks";
 import { getReports } from "@/services/reportService";
 import { useMemo } from "react";
 import { dbscan } from "@/utils/algorithm";
+import type { Report } from "@/types/types";
 
 // leaflet icon paths
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -47,7 +48,7 @@ const Hotspot = () => {
   });
 
   // Filter valid reports memoized
-  const validReports = useMemo(() => {
+  const validReports: Report[] = useMemo(() => {
     return (reports ?? []).filter(
       (r) => r.location?.latitude && r.location?.longitude,
     );
@@ -55,7 +56,7 @@ const Hotspot = () => {
 
   const clusters = useMemo(() => {
     if (!validReports.length) return [];
-    const { clusters: calculatedClusters } = dbscan(validReports, 40, 2);
+    const { clusters: calculatedClusters } = dbscan(validReports, 5, 2);
     return calculatedClusters || [];
   }, [validReports]);
 

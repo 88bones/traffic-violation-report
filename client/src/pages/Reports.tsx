@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import TableLayout from "@/components/layouts/TableLayout";
 import { useAppSelector } from "@/redux/hooks";
-import { getReports, patchStatus } from "@/services/reportService";
+import {
+  deleteReport,
+  getReports,
+  patchStatus,
+} from "@/services/reportService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Report } from "@/types/types";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -57,6 +61,7 @@ const Reports = () => {
   // State for the modal
   const [viewingReport, setViewingReport] = useState<Report | null>(null);
   const [selectedRadius, setSelectedRadius] = useState<number | "all">("all");
+  const [isDisabled, setIsDisabled] = useState(false);
 
   const { longitude, latitude } = useAppSelector((state) => state.location);
   // console.log({ locationName, longitude, latitude });
@@ -102,29 +107,50 @@ const Reports = () => {
   };
 
   //all filter
-  const filteredReports = (reports ?? []).filter((report) => {
-    const statusMatch =
-      !selectedStatus ||
-      selectedStatus === "all" ||
-      report.status === selectedStatus;
-    const violationMatch =
-      !selectedViolation ||
-      selectedViolation === "all" ||
-      report.violation === selectedViolation;
+  const filteredReports = useMemo(() => {
+    return (reports ?? []).filter((report) => {
+      const statusMatch =
+        !selectedStatus ||
+        selectedStatus === "all" ||
+        report.status === selectedStatus;
+      const violationMatch =
+        !selectedViolation ||
+        selectedViolation === "all" ||
+        report.violation === selectedViolation;
 
-    const distanceMatch =
-      selectedRadius === "all" ||
-      !latitude ||
-      !longitude ||
-      haversineDistance(
-        latitude,
-        longitude,
-        report.location.latitude,
-        report.location.longitude,
-      ) <= selectedRadius;
+      const distanceMatch =
+        selectedRadius === "all" ||
+        !latitude ||
+        !longitude ||
+        haversineDistance(
+          latitude,
+          longitude,
+          report.location.latitude,
+          report.location.longitude,
+        ) <= selectedRadius;
 
-    return statusMatch && violationMatch && distanceMatch;
-  });
+      return statusMatch && violationMatch && distanceMatch;
+    });
+  }, [
+    reports,
+    selectedRadius,
+    selectedStatus,
+    selectedViolation,
+    latitude,
+    longitude,
+  ]);
+
+  const handleDelete = async (reportId: string) => {
+    setIsDisabled(true);
+    try {
+      await deleteReport(token!, reportId);
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    } catch (err) {
+      console.error("Error deleting report:", err);
+    } finally {
+      setIsDisabled(false);
+    }
+  };
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;
   if (error) return <p className="text-red-500">{(error as Error).message}</p>;
@@ -191,13 +217,24 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </TableCell>
-            <TableCell>
-              <span
+            <TableCell
+              className="flex items-center gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
                 className="bg-black px-4 py-1 text-white rounded-lg"
                 onClick={() => window.open(`/pdf/${report._id}`, "_blank")}
+                disabled={isDisabled}
               >
                 Make PDF
-              </span>
+              </button>
+              <button
+                className="bg-red-800 px-4 py-1 text-white rounded-lg "
+                disabled={isDisabled}
+                onClick={() => handleDelete(report._id)}
+              >
+                Delete
+              </button>
             </TableCell>
           </TableRow>
         )}
