@@ -79,6 +79,7 @@ const Reports = () => {
     staleTime: 1000 * 60 * 5,
   });
 
+  // update status
   const { mutate: changeStatus } = useMutation({
     mutationFn: ({ reportId, status }: { reportId: string; status: string }) =>
       patchStatus(token!, reportId, status),
@@ -87,6 +88,26 @@ const Reports = () => {
     },
   });
 
+  // delete reports
+  // const handleDelete = async (reportId: string) => {
+  //   setIsDisabled(true);
+  //   try {
+  //     await deleteReport(token!, reportId);
+  //     queryClient.invalidateQueries({ queryKey: ["reports"] });
+  //   } catch (err) {
+  //     console.error("Error deleting report:", err);
+  //   } finally {
+  //     setIsDisabled(false);
+  //   }
+  // };
+
+  const { mutate: handleDelete } = useMutation({
+    mutationFn: ({ reportId }: { reportId: string }) =>
+      deleteReport(token!, reportId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reports"] });
+    },
+  });
   // Haversine distance function
   const haversineDistance = (
     lat1: number,
@@ -139,18 +160,6 @@ const Reports = () => {
     latitude,
     longitude,
   ]);
-
-  const handleDelete = async (reportId: string) => {
-    setIsDisabled(true);
-    try {
-      await deleteReport(token!, reportId);
-      queryClient.invalidateQueries({ queryKey: ["reports"] });
-    } catch (err) {
-      console.error("Error deleting report:", err);
-    } finally {
-      setIsDisabled(false);
-    }
-  };
 
   if (isLoading) return <p className="p-10 text-center">Loading...</p>;
   if (error) return <p className="text-red-500">{(error as Error).message}</p>;
@@ -231,7 +240,7 @@ const Reports = () => {
               <button
                 className="bg-red-800 px-4 py-1 text-white rounded-lg "
                 disabled={isDisabled}
-                onClick={() => handleDelete(report._id)}
+                onClick={() => handleDelete({ reportId: report._id })}
               >
                 Delete
               </button>
