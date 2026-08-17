@@ -105,19 +105,19 @@ export default function ReportScreen() {
     {
       id: "close-btn",
       icon: "close",
-      color: COLORS.blue,
+      color: "black",
       onPress: () => setModalVisible(false),
     },
     {
       id: "trash-btn",
       icon: "trash",
-      color: "#c70202",
+      color: "red",
       onPress: () => handleDelete(selectedReport?._id!),
     },
     {
       id: "pencil-btn",
       icon: "pencil",
-      color: "#02C72D",
+      color: "green",
       onPress: () =>
         router.push({
           pathname: "/(camera)/update",
@@ -418,10 +418,14 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     position: "absolute",
-    top: 12,
-    right: 12,
+    top: 4,
+    right: 2,
     gap: 8,
-    flexDirection: "column",
+    flexDirection: "row",
+    // backgroundColor: COLORS.light,
+    // paddingHorizontal: 8,
+    // paddingVertical: 6,
+    // borderRadius: 70,
   },
   iconBtn: {
     width: 36,

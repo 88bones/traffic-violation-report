@@ -26,7 +26,7 @@
       "package": "com.x88bones.mobile",
       "config":{
         "googleMaps": {
-          "apiKey": ""
+          "apiKey": "AIzaSyBKX3eHyJzi-ErROAselSjTeYBOWTak414"
         }
       },
       "usesCleartextTraffic": true,

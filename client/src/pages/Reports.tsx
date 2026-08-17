@@ -3,6 +3,7 @@ import TableLayout from "@/components/layouts/TableLayout";
 import { useAppSelector } from "@/redux/hooks";
 import {
   deleteReport,
+  getAllReports,
   getReports,
   patchStatus,
 } from "@/services/reportService";
@@ -74,7 +75,7 @@ const Reports = () => {
     error,
   } = useQuery({
     queryKey: ["reports"],
-    queryFn: () => getReports(token!),
+    queryFn: () => getAllReports(token!),
     enabled: !!token,
     staleTime: 1000 * 60 * 5,
   });
@@ -89,18 +90,6 @@ const Reports = () => {
   });
 
   // delete reports
-  // const handleDelete = async (reportId: string) => {
-  //   setIsDisabled(true);
-  //   try {
-  //     await deleteReport(token!, reportId);
-  //     queryClient.invalidateQueries({ queryKey: ["reports"] });
-  //   } catch (err) {
-  //     console.error("Error deleting report:", err);
-  //   } finally {
-  //     setIsDisabled(false);
-  //   }
-  // };
-
   const { mutate: handleDelete } = useMutation({
     mutationFn: ({ reportId }: { reportId: string }) =>
       deleteReport(token!, reportId),

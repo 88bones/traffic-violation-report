@@ -8,6 +8,7 @@ import {
   patchReportStatus,
   checkDuplicatePlate,
   getAllFlaggedPlate,
+  getAllReports,
 } from "../controllers/reportController.js";
 import upload from "./../middleware/upload.js";
 import authMiddleware from "./../middleware/authMiddleware.js";
@@ -16,9 +17,12 @@ import { getNearbyReports } from "../controllers/nearbyReports.js";
 const router = express.Router();
 
 router.post("/", authMiddleware, upload.single("image"), createReport);
+
+router.get("/all", authMiddleware, getAllReports);
 router.get("/flagged", authMiddleware, getAllFlaggedPlate);
 
 router.get("/", authMiddleware, getReports);
+
 router.get("/:reportId", authMiddleware, getReport);
 router.delete("/:reportId", authMiddleware, deleteReport);
 router.patch("/:reportId", authMiddleware, patchReportStatus);

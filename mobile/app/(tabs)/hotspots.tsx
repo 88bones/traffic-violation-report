@@ -2,12 +2,13 @@ import { COLORS } from "@/constant/colors";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import MapView, { Callout, Circle, Marker } from "react-native-maps";
+import MapView, { Callout, Circle, Marker, UrlTile } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NEPAL_REGION } from "@/hooks/useLocation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -80,7 +81,16 @@ export default function HotspotScreen() {
               initialRegion={NEPAL_REGION}
               minZoomLevel={6}
               maxZoomLevel={18}
+              mapType="none"
             >
+              {/* {Platform.OS == "android" && (
+                <UrlTile
+                  urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maximumZ={19}
+                  flipY={false}
+                  zIndex={-1}
+                />
+              )} */}
               {/* clusters */}
               {clusters.map((cluster, i) => {
                 const center = {
@@ -217,7 +227,7 @@ export default function HotspotScreen() {
           </View>
         </View>
       </ScrollView>
-      <Text style={styles.legendText}>
+      <Text style={{ color: "black" }}>
         Showing {validReports.length} reports
       </Text>
     </SafeAreaView>
