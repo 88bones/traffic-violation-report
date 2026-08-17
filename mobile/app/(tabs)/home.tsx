@@ -28,7 +28,7 @@ export default function HomeScreen() {
     (state) => (state.auth as any)._persist?.rehydrated,
   );
   const dispatch = useAppDispatch();
-  //console.log(user);
+  console.log("Token: ", token);
 
   const [refreshing, setRefreshing] = useState(false);
 

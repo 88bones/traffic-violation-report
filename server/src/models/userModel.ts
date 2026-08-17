@@ -31,10 +31,16 @@ const userSchema: Schema<UserDocument> = new Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    pushToken:{
-      type:String,
-      default:null,
-    }
+    reports: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Report",
+      },
+    ],
+    pushToken: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
 );

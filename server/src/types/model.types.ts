@@ -9,6 +9,7 @@ export interface IUser {
   password: string;
   phone: number;
   role: "user" | "admin";
+  reports?: mongoose.Types.ObjectId;
   pushToken: string;
   createdAt: Date;
   updatedAt: Date;

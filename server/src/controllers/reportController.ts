@@ -85,6 +85,7 @@ const getReports = async (req: AuthRequest, res: Response): Promise<void> => {
     const reports = await Report.find({ reportedBy: userId }).sort({
       createdAt: -1,
     });
+    // .populate({ path: "reportedBy", select: "name" });
     res.status(200).json({ reports });
   } catch (err) {
     const error = err as Error;
@@ -103,8 +104,7 @@ const getAllReports = async (
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
-    const count = await Report.countDocuments();
-    console.log("Total Reports: ", count);
+
     const reports = await Report.find();
     res.status(200).json({ reports });
   } catch (err) {
