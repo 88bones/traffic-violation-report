@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const headers = ["#", "Name", "Email", "Phone"];
+const headers = ["#", "Name", "Email", "Phone", "No. of Reports"];
 
 const Users = () => {
   const { token } = useAppSelector((state) => state.auth);
@@ -46,6 +46,7 @@ const Users = () => {
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.phone}</TableCell>
+            <TableCell>{user.reports?.length}</TableCell>
           </TableRow>
         )}
       />

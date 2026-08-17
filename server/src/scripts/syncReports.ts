@@ -16,7 +16,7 @@ const run = async () => {
   } finally {
     await mongoose.disconnect();
     console.log("Disconnected.");
-    process.exit(0);
+    process.exit(0); 
   }
 };
 

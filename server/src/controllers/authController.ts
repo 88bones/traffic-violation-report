@@ -129,7 +129,7 @@ const savePushToken = async (
 // get all users
 const getUsers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find().select("-password").populate("reports");
 
     res.status(200).json(users);
   } catch (err) {
