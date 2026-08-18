@@ -3,8 +3,9 @@ import { useAppSelector } from "@/redux/hooks";
 import { useEffect } from "react";
 import ReportDonut from "@/components/layouts/ReportDonut";
 import { useQuery } from "@tanstack/react-query";
-import { getReports } from "@/services/reportService";
+import { getAllReports } from "@/services/reportService";
 import ReportCard from "@/components/layouts/ReportCard";
+import { ReportLineChart } from "@/components/layouts/ReportLineChart";
 
 // const headers = ["#", "Name", "Email", "Phone"];
 
@@ -24,7 +25,7 @@ const DashBoard = () => {
     error,
   } = useQuery({
     queryKey: ["reports"],
-    queryFn: () => getReports(token!),
+    queryFn: () => getAllReports(token!),
     enabled: !!token,
     staleTime: 1000 * 60 * 5,
   });
@@ -40,6 +41,7 @@ const DashBoard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <ReportDonut reports={reports!} />
         <ReportCard reports={reports!} />
+        <ReportLineChart reports={reports!} />
       </div>
     </div>
   );

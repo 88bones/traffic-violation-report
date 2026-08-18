@@ -49,6 +49,7 @@ const headers = [
   "Number Plate",
   "Violation",
   "Location",
+  "Time",
   "Date",
   "Status",
   "Actions",
@@ -191,6 +192,9 @@ const Reports = () => {
             </TableCell>
             <TableCell className="max-w-[150px] truncate">
               {report.location?.name ?? "Unknown"}
+            </TableCell>
+            <TableCell>
+              {new Date(report.createdAt).toLocaleTimeString()}
             </TableCell>
             <TableCell>
               {new Date(report.createdAt).toLocaleDateString()}
