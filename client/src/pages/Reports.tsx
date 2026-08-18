@@ -4,7 +4,6 @@ import { useAppSelector } from "@/redux/hooks";
 import {
   deleteReport,
   getAllReports,
-  getReports,
   patchStatus,
 } from "@/services/reportService";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

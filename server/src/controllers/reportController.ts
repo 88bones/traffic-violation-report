@@ -35,6 +35,11 @@ const createReport = async (req: AuthRequest, res: Response): Promise<void> => {
 
     await newReport.save();
 
+    // push to user
+    await User.findByIdAndUpdate(req.user?.id, {
+      $push: { reports: newReport._id },
+    });
+
     //check for duplicate plates
     const normalisedPlate = (number_plate as string)
       .replace(/\s/g, "")
@@ -98,13 +103,6 @@ const getAllReports = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      res.status(401).json({ message: "Unauthorized" });
-      return;
-    }
-
     const reports = await Report.find();
     res.status(200).json({ reports });
   } catch (err) {
