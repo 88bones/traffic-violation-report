@@ -83,14 +83,13 @@ export default function HotspotScreen() {
               maxZoomLevel={18}
               mapType="none"
             >
-              {/* {Platform.OS == "android" && (
+              {Platform.OS == "android" && (
                 <UrlTile
                   urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                   maximumZ={19}
                   flipY={false}
-                  zIndex={-1}
                 />
-              )} */}
+              )}
               {/* clusters */}
               {clusters.map((cluster, i) => {
                 const center = {

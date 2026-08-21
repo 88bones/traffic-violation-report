@@ -30,7 +30,7 @@ interface Props {
 
 export function ReportLineChart({ reports }: Props) {
   const chartData = useMemo(() => {
-    // ← count violations per hour
+    //  count violations per hour
     const hours = Array(24).fill(0);
     reports.forEach((r) => {
       const hour = new Date(r.createdAt).getHours();
@@ -68,8 +68,8 @@ export function ReportLineChart({ reports }: Props) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value} // ← show hour
-              interval={2} // ← show every 2 hours
+              tickFormatter={(value) => value} // show hour
+              interval={2} // show every 2 hours
             />
             <YAxis
               tickLine={false}

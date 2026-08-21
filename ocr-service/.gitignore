@@ -1,1 +1,8 @@
 character_ocr/
+
+.venv/
+venv/
+
+*.keras
+
+debug_out
