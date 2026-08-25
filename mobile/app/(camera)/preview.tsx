@@ -20,6 +20,8 @@ import MapView, { Marker, Region, UrlTile } from "react-native-maps";
 import { useLocation, NEPAL_REGION } from "@/hooks/useLocation";
 import Constants from "expo-constants";
 import { useReportForm } from "@/hooks/useReportForm";
+import { useEffect, useState } from "react";
+import API_BASE_URL from "@/config/apiConfig";
 
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
@@ -30,6 +32,11 @@ const violations = [
 
 export default function PreviewScreen() {
   const { image } = useLocalSearchParams<{ image: string }>();
+  // console.log(image);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const {
     search,
     results,
@@ -55,6 +62,51 @@ export default function PreviewScreen() {
     handleCreate,
   } = useReportForm();
 
+  const predictNumber = async () => {
+    if (!image) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+
+      const filename = image.split("/").pop() || "plate.jpg";
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image/jpeg";
+
+      const response = await fetch(`${API_BASE_URL}/predict`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
+
+      const json = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || "Failed to scan plate");
+      }
+
+      if (json.plate_text) {
+        setNumberPlate(json.plate_text);
+      }
+    } catch (error) {
+      const err = new Error();
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // triggers ocr when image is present on mount
+  useEffect(() => {
+    if (image) {
+      predictNumber();
+    }
+  }, [image]);
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -66,6 +118,15 @@ export default function PreviewScreen() {
       >
         <View style={styles.imageContainer}>
           <Image source={{ uri: image }} style={styles.image} />
+
+          {loading && (
+            <View style={styles.ocrLoadingOverlay}>
+              <ActivityIndicator size="large" color={COLORS.blue} />
+              <Text style={styles.ocrLoadingText}>
+                Scanning License Plate...
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.form}>
@@ -144,7 +205,7 @@ export default function PreviewScreen() {
             </View>
           )}
 
-          {/* {mapView && (
+          {Platform.OS === "ios" && mapView && (
             <View style={styles.mapContainer}>
               <MapView
                 ref={mapRef}
@@ -153,13 +214,13 @@ export default function PreviewScreen() {
                 minZoomLevel={6}
                 maxZoomLevel={15}
                 onRegionChangeComplete={onRegionChangeComplete}
-                mapType="none"
+                // mapType="none"
               >
-                <UrlTile 
-                  urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  maximumZ={19}
-                  flipY={false}
-                />
+                {/* <UrlTile
+        urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        maximumZ={19}
+        flipY={false}
+      /> */}
                 {pin && (
                   <Marker
                     coordinate={pin}
@@ -169,7 +230,7 @@ export default function PreviewScreen() {
                 )}
               </MapView>
             </View>
-          )} */}
+          )}
 
           <TouchableOpacity
             style={styles.button}
@@ -306,5 +367,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.light,
+  },
+  ocrLoadingOverlay: {
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    marginHorizontal: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  ocrLoadingText: {
+    color: "black",
+    marginTop: 8,
+    fontWeight: "600",
   },
 });

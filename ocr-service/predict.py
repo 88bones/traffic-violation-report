@@ -1,21 +1,26 @@
-import tensorflow as tf
-import numpy as np
+import os
 import json
 import cv2
-import os
+import numpy as np
+import tensorflow as tf
 
-# ---------- setup ----------
-OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "debug_out")
+# Setup relative directory resolution
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUT_DIR = os.path.join(BASE_DIR, "debug_out")
+MODEL_DIR = os.path.join(BASE_DIR, "models")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-model = tf.keras.models.load_model("models/nepali_plate_ocr.keras")
-with open("models/class_names.json", "r", encoding="utf-8") as f:
+MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_ocr.keras")
+CLASSES_PATH = os.path.join(MODEL_DIR, "class_names.json")
+
+# Load model and class names with absolute paths
+model = tf.keras.models.load_model(MODEL_PATH)
+with open(CLASSES_PATH, "r", encoding="utf-8") as f:
     class_names = json.load(f)
 
-print("Classes:", class_names)
+print("Loaded OCR Model successfully. Classes:", class_names)
 
 
-# ---------- plate localization + deskew ----------
 def locate_and_deskew_plate(img, debug_prefix=None):
     """Find the largest red blob in the image, deskew it to axis-aligned, return crop."""
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -27,7 +32,7 @@ def locate_and_deskew_plate(img, debug_prefix=None):
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
 
     if debug_prefix:
-        cv2.imwrite(f"{OUT_DIR}/{debug_prefix}_01_redmask.png", mask)
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_01_redmask.png"), mask)
 
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not contours:
@@ -44,9 +49,9 @@ def locate_and_deskew_plate(img, debug_prefix=None):
         vis = img.copy()
         box = cv2.boxPoints(rect).astype(int)
         cv2.drawContours(vis, [box], 0, (0, 255, 0), 3)
-        cv2.imwrite(f"{OUT_DIR}/{debug_prefix}_02_detected_box.png", vis)
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_02_detected_box.png"), vis)
 
-    # normalize angle so the longer side becomes width
+    # Normalize angle so the longer side becomes width
     if w < h:
         angle += 90
         w, h = h, w
@@ -69,12 +74,11 @@ def locate_and_deskew_plate(img, debug_prefix=None):
     plate_crop = rotated[y1:y2, x1:x2]
 
     if debug_prefix:
-        cv2.imwrite(f"{OUT_DIR}/{debug_prefix}_03_deskewed.png", plate_crop)
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_03_deskewed.png"), plate_crop)
 
     return plate_crop, rect
 
 
-# ---------- preprocessing ----------
 def preprocess_char(char_img):
     char_img = cv2.resize(char_img, (48, 48))
     char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
@@ -101,7 +105,6 @@ def auto_threshold(gray):
     return t_inv
 
 
-# ---------- character segmentation ----------
 def segment_characters(plate_img, debug_prefix=None):
     gray, resized = preprocess_plate(plate_img)
 
@@ -111,13 +114,13 @@ def segment_characters(plate_img, debug_prefix=None):
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
     if debug_prefix:
-        cv2.imwrite(f"{OUT_DIR}/{debug_prefix}_04_thresh.png", thresh)
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_04_thresh.png"), thresh)
 
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     h_img, w_img = thresh.shape
     char_contours = []
-    edge_margin = int(w_img * 0.02)  # reject blobs hugging the very edge (bolts, border trim)
+    edge_margin = int(w_img * 0.02)
 
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
@@ -126,31 +129,31 @@ def segment_characters(plate_img, debug_prefix=None):
         solidity = cv2.contourArea(cnt) / (w * h) if w * h > 0 else 0
 
         touches_edge = (x <= edge_margin or (x + w) >= (w_img - edge_margin))
-        near_circular = 0.75 < (w / h if h > 0 else 0) < 1.35 and solidity > 0.75  # bolt heads
+        near_circular = 0.75 < (w / h if h > 0 else 0) < 1.35 and solidity > 0.75
 
         if (area > 300 and
             area < (h_img * w_img * 0.3) and
             aspect_ratio > 0.4 and
-            w > w_img * 0.045 and     # drop hairline slivers 
+            w > w_img * 0.045 and
             w < w_img * 0.4 and
             h > h_img * 0.15 and
-            h < h_img * 0.9 and       # drop full-height strips 
+            h < h_img * 0.9 and
             not (touches_edge and near_circular)):
             char_contours.append((x, y, w, h))
 
-    # Sort by row then left to right
-    char_contours = sorted(char_contours, key=lambda c: (c[1] // 60, c[0]))
+    # Dynamic row sorting threshold (based on resized image height)
+    row_threshold = h_img * 0.35
+    char_contours = sorted(char_contours, key=lambda c: (int(c[1] // row_threshold), c[0]))
 
     if debug_prefix:
         vis = resized.copy()
         for (x, y, w, h) in char_contours:
             cv2.rectangle(vis, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.imwrite(f"{OUT_DIR}/{debug_prefix}_05_char_boxes.png", vis)
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_05_char_boxes.png"), vis)
 
     return char_contours, resized
 
 
-# ---------- full pipeline ----------
 def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
     img = cv2.imread(image_path)
     if img is None:
@@ -166,7 +169,7 @@ def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
     plate_lower = plate[int(h * crop_top_frac):, :]
 
     if debug_prefix:
-        cv2.imwrite(f"{OUT_DIR}/{debug_prefix}_03b_lower_crop.png", plate_lower)
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_03b_lower_crop.png"), plate_lower)
 
     char_contours, resized = segment_characters(plate_lower, debug_prefix=debug_prefix)
     print(f"Found {len(char_contours)} characters")
@@ -192,8 +195,8 @@ def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
     return plate_text
 
 
-# ---------- test ----------
 if __name__ == "__main__":
-  #image
-    result = read_plate("/Users/88neat/Downloads/number_slanted.png", debug_prefix="test")
-    print("Plate:", result)
+    test_img = os.path.join(BASE_DIR, "test.jpg")
+    if os.path.exists(test_img):
+        result = read_plate(test_img, debug_prefix="test")
+        print("Plate result:", result)
