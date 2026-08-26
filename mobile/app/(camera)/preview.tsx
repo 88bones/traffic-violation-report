@@ -20,8 +20,8 @@ import MapView, { Marker, Region, UrlTile } from "react-native-maps";
 import { useLocation, NEPAL_REGION } from "@/hooks/useLocation";
 import Constants from "expo-constants";
 import { useReportForm } from "@/hooks/useReportForm";
+import { usePlateOCR } from "@/hooks/usePlateOcr";
 import { useEffect, useState } from "react";
-import API_BASE_URL from "@/config/apiConfig";
 
 const violations = [
   { label: "Speeding", value: Violation.Speeding },
@@ -32,11 +32,6 @@ const violations = [
 
 export default function PreviewScreen() {
   const { image } = useLocalSearchParams<{ image: string }>();
-  // console.log(image);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
   const {
     search,
     results,
@@ -62,50 +57,28 @@ export default function PreviewScreen() {
     handleCreate,
   } = useReportForm();
 
-  const predictNumber = async () => {
-    if (!image) return;
+  // Auto-detect the plate number from the captured photo.
+  const {
+    detectedPlate,
+    isDetecting,
+    error: ocrError,
+  } = usePlateOCR(image ?? null);
 
-    setLoading(true);
-    setError("");
+  // Track whether the user has manually edited the field, so we don't
+  // clobber their typing if OCR resolves after they've already started
+  // correcting it.
+  const [userEditedPlate, setUserEditedPlate] = useState(false);
 
-    try {
-      const formData = new FormData();
-
-      const filename = image.split("/").pop() || "plate.jpg";
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : "image/jpeg";
-
-      const response = await fetch(`${API_BASE_URL}/predict`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        body: formData,
-      });
-
-      const json = await response.json();
-
-      if (!response.ok || !json.success) {
-        throw new Error(json.error || "Failed to scan plate");
-      }
-
-      if (json.plate_text) {
-        setNumberPlate(json.plate_text);
-      }
-    } catch (error) {
-      const err = new Error();
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // triggers ocr when image is present on mount
   useEffect(() => {
-    if (image) {
-      predictNumber();
+    if (detectedPlate && !userEditedPlate) {
+      setNumberPlate(detectedPlate);
     }
-  }, [image]);
+  }, [detectedPlate]);
+
+  const handlePlateChange = (text: string) => {
+    setUserEditedPlate(true);
+    setNumberPlate(text);
+  };
 
   return (
     <KeyboardAvoidingView
@@ -118,25 +91,30 @@ export default function PreviewScreen() {
       >
         <View style={styles.imageContainer}>
           <Image source={{ uri: image }} style={styles.image} />
-
-          {loading && (
-            <View style={styles.ocrLoadingOverlay}>
-              <ActivityIndicator size="large" color={COLORS.blue} />
-              <Text style={styles.ocrLoadingText}>
-                Scanning License Plate...
-              </Text>
-            </View>
-          )}
         </View>
 
         <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Number Plate"
-            placeholderTextColor={COLORS.darkblue}
-            value={numberPlate}
-            onChangeText={setNumberPlate}
-          />
+          <View style={styles.plateInputWrapper}>
+            <TextInput
+              style={styles.input}
+              placeholder="Number Plate"
+              placeholderTextColor={COLORS.darkblue}
+              value={numberPlate}
+              onChangeText={handlePlateChange}
+            />
+            {isDetecting && (
+              <ActivityIndicator
+                size="small"
+                color={COLORS.blue}
+                style={styles.plateSpinner}
+              />
+            )}
+          </View>
+          {ocrError && (
+            <Text style={styles.ocrErrorText}>
+              Auto-detect unavailable — enter the plate manually.
+            </Text>
+          )}
 
           <TouchableOpacity
             style={styles.dropdown}
@@ -205,7 +183,7 @@ export default function PreviewScreen() {
             </View>
           )}
 
-          {Platform.OS === "ios" && mapView && (
+          {mapView && (
             <View style={styles.mapContainer}>
               <MapView
                 ref={mapRef}
@@ -217,10 +195,10 @@ export default function PreviewScreen() {
                 // mapType="none"
               >
                 {/* <UrlTile
-        urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maximumZ={19}
-        flipY={false}
-      /> */}
+                  urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  maximumZ={19}
+                  flipY={false}
+                /> */}
                 {pin && (
                   <Marker
                     coordinate={pin}
@@ -270,6 +248,19 @@ const styles = StyleSheet.create({
   form: {
     padding: 16,
     gap: 12,
+  },
+  plateInputWrapper: {
+    position: "relative",
+    justifyContent: "center",
+  },
+  plateSpinner: {
+    position: "absolute",
+    right: 14,
+  },
+  ocrErrorText: {
+    color: "#9ca3af",
+    fontSize: 12,
+    marginTop: -8,
   },
   dropdown: {
     borderWidth: 1,
@@ -367,17 +358,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     color: COLORS.light,
-  },
-  ocrLoadingOverlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    marginHorizontal: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  ocrLoadingText: {
-    color: "black",
-    marginTop: 8,
-    fontWeight: "600",
   },
 });
