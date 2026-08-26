@@ -57,16 +57,13 @@ export default function PreviewScreen() {
     handleCreate,
   } = useReportForm();
 
-  // Auto-detect the plate number from the captured photo.
+  // Auto-detect
   const {
     detectedPlate,
     isDetecting,
     error: ocrError,
   } = usePlateOCR(image ?? null);
 
-  // Track whether the user has manually edited the field, so we don't
-  // clobber their typing if OCR resolves after they've already started
-  // correcting it.
   const [userEditedPlate, setUserEditedPlate] = useState(false);
 
   useEffect(() => {
@@ -183,7 +180,7 @@ export default function PreviewScreen() {
             </View>
           )}
 
-          {mapView && (
+          {Platform.OS === "ios" && mapView && (
             <View style={styles.mapContainer}>
               <MapView
                 ref={mapRef}

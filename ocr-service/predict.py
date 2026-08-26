@@ -12,6 +12,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_ocr.keras")
 CLASSES_PATH = os.path.join(MODEL_DIR, "class_names.json")
+NEPALI_DIGIT_TRANSLATION = str.maketrans("०१२३४५६७८९", "0123456789")
 
 # Load model and class names with absolute paths
 model = tf.keras.models.load_model(MODEL_PATH)
@@ -192,7 +193,7 @@ def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
         if confidence > 40:
             plate_text += predicted_class
 
-    return plate_text
+    return plate_text.translate(NEPALI_DIGIT_TRANSLATION)
 
 
 if __name__ == "__main__":
