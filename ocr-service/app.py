@@ -35,22 +35,38 @@ def predict():
         return jsonify({"error": "Empty filename"}), 400
 
     if not allowed_file(file.filename):
-        return jsonify({"error": "Unsupported file type. Use jpg/jpeg/png."}), 400
+        return jsonify({"error": "Unsupported file type. Use jpg/jpeg/png/heic."}), 400
+
+    # Optional parameters with defaults
+    crop_top = float(request.form.get("crop_top_frac", 0.25))
+    min_confidence = int(request.form.get("min_confidence", 55))
+    debug = request.form.get("debug", "false").lower() == "true"
 
     ext = file.filename.rsplit(".", 1)[1].lower()
     temp_name = f"{uuid.uuid4().hex}.{ext}"
     temp_path = os.path.join(UPLOAD_DIR, temp_name)
     file.save(temp_path)
 
+    debug_prefix = temp_name.rsplit(".", 1)[0] if debug else None
+
     try:
         start = time.time()
-        plate_text = read_plate(temp_path)
+        plate_text = read_plate(
+            temp_path,
+            debug_prefix=debug_prefix,
+            crop_top_frac=crop_top,
+            min_confidence=min_confidence
+        )
         elapsed = time.time() - start
 
         return jsonify({
             "success": True,
             "plate_text": plate_text,
             "processing_time_sec": round(elapsed, 3),
+            "params": {
+                "crop_top_frac": crop_top,
+                "min_confidence": min_confidence
+            }
         }), 200
 
     except Exception as e:

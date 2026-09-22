@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import MapView, { Callout, Circle, Marker, UrlTile } from "react-native-maps";
+import MapView, { Callout, Circle, Marker, PROVIDER_DEFAULT, UrlTile } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NEPAL_REGION } from "@/hooks/useLocation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -63,31 +63,41 @@ export default function HotspotScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>🗺️ Violation Hotspots</Text>
+        <Text style={styles.subtitle}>
+          {validReports.length} reports • {clusters.length} clusters
+        </Text>
+      </View>
+
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-        <Text style={styles.header}>Hotspots</Text>
-
         {isLoading ? (
-          <ActivityIndicator size={24} color={COLORS.blue} />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.blue} />
+            <Text style={styles.loadingText}>Loading hotspots...</Text>
+          </View>
         ) : (
           <View style={styles.mapContainer}>
             <MapView
+              provider={PROVIDER_DEFAULT}
               style={StyleSheet.absoluteFillObject}
               initialRegion={NEPAL_REGION}
               minZoomLevel={6}
               maxZoomLevel={18}
-              mapType="none"
+              mapType={Platform.OS === "android" ? "none" : "standard"}
             >
-              {Platform.OS == "android" && (
+              {Platform.OS === "android" && (
                 <UrlTile
                   urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
                   maximumZ={19}
                   flipY={false}
+                  zIndex={-1}
                 />
               )}
               {/* clusters */}
@@ -139,7 +149,7 @@ export default function HotspotScreen() {
                           {/* Header */}
                           <View style={styles.bubbleHeader}>
                             <Text style={styles.plateText}>
-                              {report.number_plate.toUpperCase()}
+                              🚗 {report.number_plate.toUpperCase()}
                             </Text>
                             <View
                               style={[
@@ -147,10 +157,10 @@ export default function HotspotScreen() {
                                 {
                                   backgroundColor:
                                     report.status === "approved"
-                                      ? "#e6f4ea"
+                                      ? "#d4edda"
                                       : report.status === "rejected"
-                                        ? "#fce8e8"
-                                        : "#fef3c7",
+                                        ? "#f8d7da"
+                                        : "#fff3cd",
                                 },
                               ]}
                             >
@@ -160,10 +170,10 @@ export default function HotspotScreen() {
                                   {
                                     color:
                                       report.status === "approved"
-                                        ? "#2d6a4f"
+                                        ? "#155724"
                                         : report.status === "rejected"
-                                          ? "#b91c1c"
-                                          : "#92400e",
+                                          ? "#721c24"
+                                          : "#856404",
                                   },
                                 ]}
                               >
@@ -207,28 +217,28 @@ export default function HotspotScreen() {
                 );
               })}
             </MapView>
+
+            <View style={styles.legendsContainer}>
+              <View style={styles.legendCard}>
+                <Text style={styles.legendTitle}>Violation Types</Text>
+                <View style={styles.legendsRow}>
+                  {LEGENDS.map((item) => (
+                    <View key={item.label} style={styles.legendItem}>
+                      <View
+                        style={[
+                          styles.colorIndicator,
+                          { backgroundColor: item.color },
+                        ]}
+                      />
+                      <Text style={styles.legendText}>{item.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
           </View>
         )}
-        <View style={styles.legendsContainer}>
-          <Text style={styles.legendTitle}>Legends:</Text>
-          <View style={styles.legendsRow}>
-            {LEGENDS.map((item) => (
-              <View key={item.label} style={styles.legendItem}>
-                <View
-                  style={[
-                    styles.colorIndicator,
-                    { backgroundColor: item.color },
-                  ]}
-                />
-                <Text style={styles.legendText}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
       </ScrollView>
-      <Text style={{ color: "black" }}>
-        Showing {validReports.length} reports
-      </Text>
     </SafeAreaView>
   );
 }
@@ -237,114 +247,162 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.light,
-    paddingHorizontal: 16,
+  },
+  headerContainer: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   header: {
     fontSize: 24,
     fontWeight: "bold",
-    textAlign: "center",
-    color: COLORS.blue,
-    marginVertical: 12,
+    color: COLORS.darkblue,
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "500",
   },
   mapContainer: {
     flex: 1,
-    borderRadius: 12,
+    margin: 16,
+    borderRadius: 20,
     overflow: "hidden",
-    marginBottom: 2,
     position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   legendsContainer: {
-    backgroundColor: "transparent",
-    padding: 12,
-    borderRadius: 8,
     position: "absolute",
-    top: 60,
+    top: 16,
+    left: 16,
+    right: 16,
+  },
+  legendCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    padding: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   legendTitle: {
     fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 8,
-    color: "white",
+    fontWeight: "700",
+    marginBottom: 12,
+    color: COLORS.darkblue,
   },
   legendsRow: {
     flexDirection: "column",
-    gap: 8,
-    flexWrap: "wrap",
+    gap: 10,
   },
   legendItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 10,
   },
   colorIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
   },
   legendText: {
-    fontSize: 12,
-    color: "white",
+    fontSize: 13,
+    color: "#1a1a1a",
+    fontWeight: "600",
   },
   bubble: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
-    width: 250,
+    borderRadius: 16,
+    padding: 16,
+    width: 260,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
   },
   bubbleHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 12,
   },
   plateText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "bold",
     color: "#1a1a2e",
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   statusText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "700",
+    letterSpacing: 0.5,
   },
   bubbleDivider: {
-    height: 0.5,
-    backgroundColor: "#e0e0e0",
-    marginBottom: 8,
+    height: 1,
+    backgroundColor: "#e5e7eb",
+    marginBottom: 12,
   },
   bubbleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 6,
+    gap: 8,
+    marginBottom: 8,
   },
   violationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   violationText: {
-    fontSize: 13,
-    color: "#333",
+    fontSize: 14,
+    color: "#1a1a1a",
     textTransform: "capitalize",
+    fontWeight: "600",
   },
   locationText: {
-    fontSize: 11,
+    fontSize: 12,
     color: "#666",
-    marginBottom: 4,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   dateText: {
-    fontSize: 11,
+    fontSize: 12,
     color: "#999",
   },
   bubbleArrow: {

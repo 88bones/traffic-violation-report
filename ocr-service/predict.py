@@ -79,7 +79,7 @@ def locate_and_deskew_plate(img, debug_prefix=None):
 
     return plate_crop, rect
 
-
+i
 def preprocess_char(char_img):
     char_img = cv2.resize(char_img, (48, 48))
     char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
@@ -90,9 +90,10 @@ def preprocess_char(char_img):
 def preprocess_plate(img):
     img = cv2.resize(img, (400, 200))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
     gray = clahe.apply(gray)
-    gray = cv2.fastNlMeansDenoising(gray, h=10)
+    # Reduced denoising strength to preserve character edges
+    gray = cv2.fastNlMeansDenoising(gray, h=7)
     return gray, img
 
 
@@ -123,6 +124,10 @@ def segment_characters(plate_img, debug_prefix=None):
     char_contours = []
     edge_margin = int(w_img * 0.02)
 
+    # Improved character filtering with relative thresholds
+    min_area = h_img * w_img * 0.005  # Relative to image size
+    max_area = h_img * w_img * 0.25
+
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
         area = w * h
@@ -132,13 +137,15 @@ def segment_characters(plate_img, debug_prefix=None):
         touches_edge = (x <= edge_margin or (x + w) >= (w_img - edge_margin))
         near_circular = 0.75 < (w / h if h > 0 else 0) < 1.35 and solidity > 0.75
 
-        if (area > 300 and
-            area < (h_img * w_img * 0.3) and
-            aspect_ratio > 0.4 and
-            w > w_img * 0.045 and
-            w < w_img * 0.4 and
-            h > h_img * 0.15 and
-            h < h_img * 0.9 and
+        if (area > min_area and
+            area < max_area and
+            aspect_ratio > 0.5 and  # More lenient aspect ratio
+            aspect_ratio < 4.0 and  # Upper bound for aspect ratio
+            w > w_img * 0.04 and  # Slightly relaxed minimum width
+            w < w_img * 0.35 and
+            h > h_img * 0.2 and  # Adjusted height constraints
+            h < h_img * 0.95 and
+            solidity > 0.3 and  # Minimum solidity check
             not (touches_edge and near_circular)):
             char_contours.append((x, y, w, h))
 
@@ -155,13 +162,22 @@ def segment_characters(plate_img, debug_prefix=None):
     return char_contours, resized
 
 
-def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
+def read_plate(image_path, debug_prefix=None, crop_top_frac=0.25, min_confidence=55):
+    """
+    Read license plate from image with improved accuracy.
+
+    Args:
+        image_path: Path to input image
+        debug_prefix: Optional prefix for debug output files
+        crop_top_frac: Fraction to crop from top (default 0.25, reduced from 0.30)
+        min_confidence: Minimum confidence threshold for character recognition (default 55%)
+    """
     img = cv2.imread(image_path)
     if img is None:
         print(f"Could not read {image_path}")
         return ""
 
-    plate, rect = locate_and_deskew_plate(img, debug_prefix=debug_prefix)
+    plate, _ = locate_and_deskew_plate(img, debug_prefix=debug_prefix)
     if plate is None:
         print("No plate located, falling back to full image")
         plate = img
@@ -173,10 +189,12 @@ def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
         cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_03b_lower_crop.png"), plate_lower)
 
     char_contours, resized = segment_characters(plate_lower, debug_prefix=debug_prefix)
-    print(f"Found {len(char_contours)} characters")
+    print(f"Found {len(char_contours)} character candidates")
 
     plate_text = ""
-    for (x, y, w, h) in char_contours:
+    char_confidences = []
+
+    for idx, (x, y, w, h) in enumerate(char_contours):
         pad = 4
         x1 = max(0, x - pad)
         y1 = max(0, y - pad)
@@ -189,11 +207,25 @@ def read_plate(image_path, debug_prefix=None, crop_top_frac=0.30):
         predicted_class = class_names[np.argmax(predictions[0])]
         confidence = np.max(predictions[0]) * 100
 
-        print(f"  {predicted_class} ({confidence:.1f}%)")
-        if confidence > 40:
-            plate_text += predicted_class
+        print(f"  Char {idx+1}: {predicted_class} ({confidence:.1f}%)")
 
-    return plate_text.translate(NEPALI_DIGIT_TRANSLATION)
+        # Higher confidence threshold for better accuracy
+        if confidence >= min_confidence:
+            plate_text += predicted_class
+            char_confidences.append(confidence)
+        else:
+            print(f"    -> Rejected (confidence {confidence:.1f}% < {min_confidence}%)")
+
+    result = plate_text.translate(NEPALI_DIGIT_TRANSLATION)
+
+    # Log overall statistics
+    if char_confidences:
+        avg_conf = sum(char_confidences) / len(char_confidences)
+        print(f"Accepted {len(char_confidences)}/{len(char_contours)} characters, avg confidence: {avg_conf:.1f}%")
+    else:
+        print("No characters met confidence threshold")
+
+    return result
 
 
 if __name__ == "__main__":

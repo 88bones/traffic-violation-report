@@ -1,11 +1,34 @@
 import { COLORS } from "@/constant/colors";
 import { Report } from "@/types/types";
 import { StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { LinearGradient } from "expo-linear-gradient";
 
 interface ReportCardProps {
   reports: Report[];
 }
+
+const StatCard = ({
+  icon,
+  value,
+  label,
+  colors,
+  iconColor,
+}: {
+  icon: string;
+  value: number;
+  label: string;
+  colors: string[];
+  iconColor: string;
+}) => (
+  <LinearGradient colors={colors} style={styles.statCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+    <View style={[styles.iconContainer, { backgroundColor: iconColor + "20" }]}>
+      <MaterialCommunityIcons name={icon as any} size={24} color={iconColor} />
+    </View>
+    <Text style={styles.statNumber}>{value}</Text>
+    <Text style={styles.statLabel}>{label}</Text>
+  </LinearGradient>
+);
 
 export default function ReportCard({ reports }: ReportCardProps) {
   const total = reports.length;
@@ -15,33 +38,38 @@ export default function ReportCard({ reports }: ReportCardProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Report Stats</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.header}>📊 Report Overview</Text>
+      </View>
       <View style={styles.statsGrid}>
-        <View style={[styles.statCard, { backgroundColor: "#e8f0fe" }]}>
-          <Text style={[styles.statNumber, { color: "#1a73e8" }]}>{total}</Text>
-          <Text style={[styles.statLabel, { color: "#1a73e8" }]}>Total</Text>
-        </View>
-
-        <View style={[styles.statCard, { backgroundColor: "#fef3c7" }]}>
-          <Text style={[styles.statNumber, { color: "#92400e" }]}>
-            {pending}
-          </Text>
-          <Text style={[styles.statLabel, { color: "#92400e" }]}>Pending</Text>
-        </View>
-
-        <View style={[styles.statCard, { backgroundColor: "#e6f4ea" }]}>
-          <Text style={[styles.statNumber, { color: "#2d6a4f" }]}>
-            {approved}
-          </Text>
-          <Text style={[styles.statLabel, { color: "#2d6a4f" }]}>Approved</Text>
-        </View>
-
-        <View style={[styles.statCard, { backgroundColor: "#fce8e8" }]}>
-          <Text style={[styles.statNumber, { color: "#b91c1c" }]}>
-            {rejected}
-          </Text>
-          <Text style={[styles.statLabel, { color: "#b91c1c" }]}>Rejected</Text>
-        </View>
+        <StatCard
+          icon="file-document-multiple"
+          value={total}
+          label="Total Reports"
+          colors={["#E3F2FD", "#BBDEFB"]}
+          iconColor="#1976D2"
+        />
+        <StatCard
+          icon="clock-outline"
+          value={pending}
+          label="Pending"
+          colors={["#FFF9E6", "#FFF3CD"]}
+          iconColor="#F59E0B"
+        />
+        <StatCard
+          icon="check-circle"
+          value={approved}
+          label="Approved"
+          colors={["#E8F5E9", "#C8E6C9"]}
+          iconColor="#388E3C"
+        />
+        <StatCard
+          icon="close-circle"
+          value={rejected}
+          label="Rejected"
+          colors={["#FFEBEE", "#FFCDD2"]}
+          iconColor="#D32F2F"
+        />
       </View>
     </View>
   );
@@ -50,23 +78,27 @@ export default function ReportCard({ reports }: ReportCardProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 24,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
   },
   header: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
     color: COLORS.darkblue,
-    marginBottom: 12,
   },
   statsGrid: {
     flexDirection: "row",
@@ -75,17 +107,34 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    minWidth: "45%",
-    borderRadius: 12,
-    padding: 16,
+    minWidth: "46%",
+    borderRadius: 16,
+    padding: 20,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  statNumber: { fontSize: 28, fontWeight: "bold" },
-  statLabel: { fontSize: 13, fontWeight: "500", marginTop: 4 },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: COLORS.darkblue,
-    marginBottom: 8,
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  statNumber: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#1a1a1a",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#666",
+    textAlign: "center",
   },
 });

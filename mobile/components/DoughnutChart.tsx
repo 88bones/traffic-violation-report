@@ -2,10 +2,18 @@ import { COLORS } from "@/constant/colors";
 import { Report } from "@/types/types";
 import { StyleSheet, Text, View } from "react-native";
 import { PieChart } from "react-native-gifted-charts";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 interface DoughnutChartProps {
   reports: Report[];
 }
+
+const violationIcons: Record<string, string> = {
+  speeding: "speedometer",
+  running_red_light: "traffic-light",
+  drunk_driving: "glass-cocktail",
+  reckless_driving: "car-speed-limiter",
+};
 
 export default function DoughnutChart({ reports }: DoughnutChartProps) {
   const total = reports.length;
@@ -30,60 +38,98 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
   const pieData = [
     {
       value: speeding,
-      color: "#177AD5",
+      color: "#2563eb",
       text: `${speedingPct}%`,
       label: "Speeding",
+      icon: "speedometer",
     },
     {
       value: runningRedLight,
-      color: "#79D2DE",
+      color: "#ca8a04",
       text: `${redLightPct}%`,
       label: "Red Light",
+      icon: "traffic-light",
     },
     {
       value: drunkDriving,
-      color: "#ED6665",
+      color: "#b91c1c",
       text: `${drunkPct}%`,
       label: "Drunk Driving",
+      icon: "glass-cocktail",
     },
     {
       value: recklessDriving,
-      color: "#FCD667",
+      color: "#ea580c",
       text: `${recklessPct}%`,
       label: "Reckless",
+      icon: "car-speed-limiter",
     },
   ].filter((item) => item.value > 0);
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Violation Stats</Text>
-      <View style={{ alignItems: "center" }}>
-        <PieChart
-          donut
-          radius={150}
-          textSize={14}
-          innerRadius={90}
-          showText
-          textColor="white"
-          centerLabelComponent={() => {
-            return (
-              <View>
-                {pieData.map((data, index) => (
-                  <View style={styles.legendContainer} key={index}>
-                    <Text
-                      style={[
-                        styles.colorBox,
-                        { backgroundColor: pieData[index].color },
-                      ]}
-                    ></Text>
-                    <Text style={styles.legendText}>{data.label}</Text>
-                  </View>
-                ))}
-              </View>
-            );
-          }}
-          data={pieData}
-        />
+      <View style={styles.headerRow}>
+        <Text style={styles.header}>🚦 Violation Breakdown</Text>
       </View>
+
+      {pieData.length > 0 ? (
+        <>
+          <View style={styles.chartContainer}>
+            <PieChart
+              donut
+              radius={120}
+              textSize={16}
+              innerRadius={75}
+              showText
+              textColor="white"
+              fontWeight="bold"
+              centerLabelComponent={() => {
+                return (
+                  <View style={styles.centerLabel}>
+                    <Text style={styles.totalCount}>{total}</Text>
+                    <Text style={styles.totalLabel}>Total</Text>
+                  </View>
+                );
+              }}
+              data={pieData}
+            />
+          </View>
+
+          <View style={styles.legendsContainer}>
+            {pieData.map((data, index) => (
+              <View style={styles.legendRow} key={index}>
+                <View style={styles.legendLeft}>
+                  <View
+                    style={[
+                      styles.legendDot,
+                      { backgroundColor: data.color },
+                    ]}
+                  />
+                  <MaterialCommunityIcons
+                    name={data.icon as any}
+                    size={20}
+                    color={data.color}
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.legendLabel}>{data.label}</Text>
+                </View>
+                <View style={styles.legendRight}>
+                  <Text style={styles.legendValue}>{data.value}</Text>
+                  <Text style={styles.legendPercent}>{data.text}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </>
+      ) : (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons
+            name="file-document-outline"
+            size={64}
+            color="#ccc"
+          />
+          <Text style={styles.emptyText}>No violation data available</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -91,36 +137,101 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 24,
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
-  header: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: COLORS.darkblue,
-    marginBottom: 12,
-  },
-  colorBox: {
-    width: 15,
-    height: 15,
-  },
-  legendContainer: {
+  headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
+    marginBottom: 24,
   },
-  legendText: {
+  header: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.darkblue,
+  },
+  chartContainer: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  centerLabel: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  totalCount: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: COLORS.darkblue,
+  },
+  totalLabel: {
+    fontSize: 14,
+    color: "#666",
+    fontWeight: "600",
+  },
+  legendsContainer: {
+    gap: 12,
+  },
+  legendRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F8F9FA",
+    padding: 14,
+    borderRadius: 12,
+  },
+  legendLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1a1a1a",
+    flex: 1,
+  },
+  legendRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  legendValue: {
     fontSize: 16,
-    fontWeight: "semibold",
+    fontWeight: "bold",
+    color: COLORS.darkblue,
+    minWidth: 30,
+    textAlign: "right",
+  },
+  legendPercent: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+    minWidth: 45,
+    textAlign: "right",
+  },
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 12,
   },
 });
