@@ -79,7 +79,7 @@ def locate_and_deskew_plate(img, debug_prefix=None):
 
     return plate_crop, rect
 
-i
+
 def preprocess_char(char_img):
     char_img = cv2.resize(char_img, (48, 48))
     char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)

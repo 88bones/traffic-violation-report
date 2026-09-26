@@ -8,7 +8,13 @@ import {
   Text,
   View,
 } from "react-native";
-import MapView, { Callout, Circle, Marker, PROVIDER_DEFAULT, UrlTile } from "react-native-maps";
+import MapView, {
+  Callout,
+  Circle,
+  Marker,
+  PROVIDER_DEFAULT,
+  PROVIDER_GOOGLE,
+} from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NEPAL_REGION } from "@/hooks/useLocation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -41,7 +47,9 @@ export default function HotspotScreen() {
     const { clusters: calculatedClusters } = dbscan(validReports, 40, 2);
     return calculatedClusters || [];
   }, [validReports]);
-  // console.log(clusters.length);
+
+  const mapProvider =
+    Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
 
   const getColorForViolation = (violation: string) => {
     const match = LEGENDS.find(
@@ -85,21 +93,15 @@ export default function HotspotScreen() {
         ) : (
           <View style={styles.mapContainer}>
             <MapView
-              provider={PROVIDER_DEFAULT}
+              provider={mapProvider}
               style={StyleSheet.absoluteFillObject}
               initialRegion={NEPAL_REGION}
               minZoomLevel={6}
               maxZoomLevel={18}
-              mapType={Platform.OS === "android" ? "none" : "standard"}
+              mapType="standard"
+              loadingEnabled
+              showsCompass
             >
-              {Platform.OS === "android" && (
-                <UrlTile
-                  urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  maximumZ={19}
-                  flipY={false}
-                  zIndex={-1}
-                />
-              )}
               {/* clusters */}
               {clusters.map((cluster, i) => {
                 const center = {
@@ -149,7 +151,7 @@ export default function HotspotScreen() {
                           {/* Header */}
                           <View style={styles.bubbleHeader}>
                             <Text style={styles.plateText}>
-                              🚗 {report.number_plate.toUpperCase()}
+                              {report.number_plate.toUpperCase()}
                             </Text>
                             <View
                               style={[

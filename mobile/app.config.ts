@@ -81,7 +81,7 @@ export default {
     extra: {
       router: {},
       apiBaseUrl: "http://localhost:3000",
-      androidApiBaseUrl: "http://192.168.1.70:3000",
+      androidApiBaseUrl: "http://192.168.1.98:3000",
       eas: {
         projectId: "75c6332e-bac2-4709-8817-2758638d4b31",
       },

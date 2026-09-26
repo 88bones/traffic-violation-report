@@ -8,13 +8,6 @@ interface DoughnutChartProps {
   reports: Report[];
 }
 
-const violationIcons: Record<string, string> = {
-  speeding: "speedometer",
-  running_red_light: "traffic-light",
-  drunk_driving: "glass-cocktail",
-  reckless_driving: "car-speed-limiter",
-};
-
 export default function DoughnutChart({ reports }: DoughnutChartProps) {
   const total = reports.length;
   const speeding = reports.filter((r) => r.violation === "speeding").length;
@@ -38,37 +31,41 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
   const pieData = [
     {
       value: speeding,
-      color: "#2563eb",
+      color: "#2563EB",
       text: `${speedingPct}%`,
       label: "Speeding",
       icon: "speedometer",
     },
     {
       value: runningRedLight,
-      color: "#ca8a04",
+      color: "#D97706",
       text: `${redLightPct}%`,
       label: "Red Light",
       icon: "traffic-light",
     },
     {
       value: drunkDriving,
-      color: "#b91c1c",
+      color: "#DC2626",
       text: `${drunkPct}%`,
       label: "Drunk Driving",
       icon: "glass-cocktail",
     },
     {
       value: recklessDriving,
-      color: "#ea580c",
+      color: "#EA580C",
       text: `${recklessPct}%`,
       label: "Reckless",
       icon: "car-speed-limiter",
     },
   ].filter((item) => item.value > 0);
+
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <Text style={styles.header}>🚦 Violation Breakdown</Text>
+        <View style={styles.headerLeft}>
+          <View style={styles.headerDot} />
+          <Text style={styles.header}>Violation Breakdown</Text>
+        </View>
       </View>
 
       {pieData.length > 0 ? (
@@ -76,9 +73,9 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
           <View style={styles.chartContainer}>
             <PieChart
               donut
-              radius={120}
-              textSize={16}
-              innerRadius={75}
+              radius={110}
+              textSize={14}
+              innerRadius={70}
               showText
               textColor="white"
               fontWeight="bold"
@@ -121,13 +118,18 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
           </View>
         </>
       ) : (
-        <View style={styles.emptyState}>
-          <MaterialCommunityIcons
-            name="file-document-outline"
-            size={64}
-            color="#ccc"
-          />
-          <Text style={styles.emptyText}>No violation data available</Text>
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconCircle}>
+            <MaterialCommunityIcons
+              name="chart-donut-variant"
+              size={42}
+              color={COLORS.blue}
+            />
+          </View>
+          <Text style={styles.emptyTitle}>No Violations Logged</Text>
+          <Text style={styles.emptySubtitle}>
+            When traffic violations are recorded, category charts and distributions will appear here.
+          </Text>
         </View>
       )}
     </View>
@@ -136,56 +138,72 @@ export default function DoughnutChart({ reports }: DoughnutChartProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
-    padding: 20,
+    backgroundColor: "#FFFFFF",
+    padding: 18,
     borderRadius: 20,
     marginBottom: 20,
-    shadowColor: "#000",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#0F172A",
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 3,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
   },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#D97706",
   },
   header: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
-    color: COLORS.darkblue,
+    color: "#0F172A",
   },
   chartContainer: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   centerLabel: {
     alignItems: "center",
     justifyContent: "center",
   },
   totalCount: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: "bold",
     color: COLORS.darkblue,
   },
   totalLabel: {
-    fontSize: 14,
-    color: "#666",
+    fontSize: 13,
+    color: "#64748B",
     fontWeight: "600",
   },
   legendsContainer: {
-    gap: 12,
+    gap: 10,
   },
   legendRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
-    padding: 14,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    padding: 12,
     borderRadius: 12,
   },
   legendLeft: {
@@ -194,15 +212,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     marginRight: 8,
   },
   legendLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#1a1a1a",
+    color: "#1E293B",
     flex: 1,
   },
   legendRight: {
@@ -211,27 +229,47 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   legendValue: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 15,
+    fontWeight: "700",
     color: COLORS.darkblue,
-    minWidth: 30,
+    minWidth: 26,
     textAlign: "right",
   },
   legendPercent: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    color: "#666",
-    minWidth: 45,
+    color: "#64748B",
+    minWidth: 40,
     textAlign: "right",
   },
-  emptyState: {
+  emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 40,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
   },
-  emptyText: {
-    fontSize: 14,
-    color: "#999",
-    marginTop: 12,
+  emptyIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 14,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: "#64748B",
+    textAlign: "center",
+    lineHeight: 19,
+    maxWidth: 280,
   },
 });
