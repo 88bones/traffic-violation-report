@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
 import { searchLocation } from "@/services/locationSearchService";
-import MapView, { Region } from "react-native-maps";
-import { InteractionManager } from "react-native";
+import type { MapRegion } from "@/components/OpenStreetMap";
 
-export const NEPAL_REGION: Region = {
+export const NEPAL_REGION: MapRegion = {
   latitude: 28.3949,
   longitude: 84.124,
   latitudeDelta: 6.0,
@@ -26,10 +25,10 @@ export function useLocation() {
   } | null>(null);
   const [locationName, setLocationName] = useState("");
   const [mapView, setMapView] = useState(false);
+  const [region, setRegion] = useState(NEPAL_REGION);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mapRef = useRef<MapView | null>(null);
 
-  const onRegionChangeComplete = (region: Region) => {
+  const onRegionChangeComplete = (region: MapRegion) => {
     const isOutside =
       region.latitude < NEPAL_BOUNDS.minLat ||
       region.latitude > NEPAL_BOUNDS.maxLat ||
@@ -37,7 +36,7 @@ export function useLocation() {
       region.longitude > NEPAL_BOUNDS.maxLng;
 
     if (isOutside) {
-      mapRef.current?.animateToRegion(NEPAL_REGION, 300);
+      setRegion(NEPAL_REGION);
     }
   };
 
@@ -74,28 +73,11 @@ export function useLocation() {
     setSearch(item.display_name ?? "");
     setResults([]);
     setMapView(true);
-
-    // Wait until interactions finish so MapView is mounted and ready on Android
-    InteractionManager.runAfterInteractions(() => {
-      try {
-        const animateFn = (mapRef.current as any)?.animateToRegion;
-        if (typeof animateFn === "function") {
-          animateFn.call(
-            mapRef.current,
-            {
-              latitude: lat,
-              longitude: lng,
-              latitudeDelta: 0.05,
-              longitudeDelta: 0.05,
-            },
-            500,
-          );
-        } else {
-          console.warn("animateToRegion not available on mapRef.current");
-        }
-      } catch (err) {
-        console.warn("animateToRegion failed", err);
-      }
+    setRegion({
+      latitude: lat,
+      longitude: lng,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
     });
   };
 
@@ -105,7 +87,7 @@ export function useLocation() {
     pin,
     locationName,
     mapView,
-    mapRef,
+    region,
     handleSearch,
     selectLocation,
     onRegionChangeComplete,

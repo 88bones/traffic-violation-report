@@ -2,19 +2,15 @@ import { COLORS } from "@/constant/colors";
 import {
   ActivityIndicator,
   Alert,
-  Platform,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import MapView, {
-  Callout,
-  Circle,
-  Marker,
-  PROVIDER_DEFAULT,
-  PROVIDER_GOOGLE,
-} from "react-native-maps";
+import OpenStreetMap, {
+  type OpenStreetMapCircle,
+  type OpenStreetMapMarker,
+} from "@/components/OpenStreetMap";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NEPAL_REGION } from "@/hooks/useLocation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -22,7 +18,7 @@ import { useMemo, useState } from "react";
 import { getReports } from "@/services/reportService";
 import { setReports } from "@/redux/reportSlice";
 import { ScrollView } from "react-native-gesture-handler";
-import { dbscan } from "@/utils/algorithm";
+import { dbscan, haversineDistance } from "@/utils/algorithm";
 
 const LEGENDS = [
   { label: "Drunk Driving", value: "drunk_driving", color: "#b91c1c" },
@@ -31,6 +27,19 @@ const LEGENDS = [
   { label: "Speeding", value: "speeding", color: "#2563eb" },
 ];
 
+// Minimum radius
+const MIN_CLUSTER_RADIUS_M = 300;
+// Opacity floor/step so cluster fill intensity communicates report density
+const MIN_CLUSTER_OPACITY = 0.15;
+const OPACITY_STEP_PER_REPORT = 0.05;
+const MAX_CLUSTER_OPACITY = 0.5;
+
+const clusterOpacity = (reportCount: number) =>
+  Math.min(
+    MIN_CLUSTER_OPACITY + reportCount * OPACITY_STEP_PER_REPORT,
+    MAX_CLUSTER_OPACITY,
+  );
+
 export default function HotspotScreen() {
   const { reports, isLoading } = useAppSelector((state) => state.reports);
   const { token } = useAppSelector((state) => state.auth);
@@ -38,25 +47,99 @@ export default function HotspotScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useAppDispatch();
 
-  const validReports = (reports ?? []).filter(
-    (r) => r.location?.latitude && r.location?.longitude,
+  const validReports = useMemo(
+    () =>
+      (reports ?? []).filter(
+        (r) => r.location?.latitude && r.location?.longitude,
+      ),
+    [reports],
   );
 
   const clusters = useMemo(() => {
     if (!validReports.length) return [];
-    const { clusters: calculatedClusters } = dbscan(validReports, 40, 2);
+    const { clusters: calculatedClusters } = dbscan(validReports, 0.5, 3);
     return calculatedClusters || [];
   }, [validReports]);
 
-  const mapProvider =
-    Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+  const mapMarkers = useMemo<OpenStreetMapMarker[]>(
+    () =>
+      validReports.map((report) => {
+        const violation = report.violation.replace(/_/g, " ");
+        const match = LEGENDS.find(
+          (item) => item.value.toLowerCase() === report.violation.toLowerCase(),
+        );
 
-  const getColorForViolation = (violation: string) => {
-    const match = LEGENDS.find(
-      (l) => l.value.toLowerCase() === violation?.toLowerCase(),
-    );
-    return match ? match.color : COLORS.blue;
-  };
+        return {
+          coordinate: {
+            latitude: report.location.latitude,
+            longitude: report.location.longitude,
+          },
+          color: match?.color ?? COLORS.blue,
+          title: report.number_plate.toUpperCase(),
+          details: [
+            `Status: ${report.status}`,
+            `Violation: ${violation}`,
+            `Location: ${report.location.name ?? "Unknown"}`,
+            `Date: ${new Date(report.createdAt).toLocaleDateString()}`,
+          ],
+        };
+      }),
+    [validReports],
+  );
+
+  const mapCircles = useMemo<OpenStreetMapCircle[]>(() => {
+    const clusterCircles = clusters.map((cluster) => {
+      const center = {
+        latitude:
+          cluster.reduce((sum, report) => sum + report.location.latitude, 0) /
+          cluster.length,
+        longitude:
+          cluster.reduce((sum, report) => sum + report.location.longitude, 0) /
+          cluster.length,
+      };
+      const maxDistKm = Math.max(
+        ...cluster.map((report) =>
+          haversineDistance(
+            center.latitude,
+            center.longitude,
+            report.location.latitude,
+            report.location.longitude,
+          ),
+        ),
+      );
+
+      return {
+        center,
+        radius: Math.max(maxDistKm * 1000, MIN_CLUSTER_RADIUS_M),
+        color: "#ff0000",
+        fillColor: "#ff0000",
+        fillOpacity: clusterOpacity(cluster.length),
+        strokeWidth: 2,
+      };
+    });
+
+    const reportCircles = validReports.map((report) => {
+      const match = LEGENDS.find(
+        (item) => item.value.toLowerCase() === report.violation.toLowerCase(),
+      );
+      const color = match?.color ?? COLORS.blue;
+
+      return {
+        center: {
+          latitude: report.location.latitude,
+          longitude: report.location.longitude,
+        },
+        radius: 500,
+        color,
+        fillColor: color,
+        fillOpacity: 0.25,
+        strokeWidth: 2,
+      };
+    });
+
+    return [...clusterCircles, ...reportCircles];
+  }, [clusters, validReports]);
+  console.log(clusters.length);
 
   //refresh
   const handleRefresh = async () => {
@@ -92,133 +175,12 @@ export default function HotspotScreen() {
           </View>
         ) : (
           <View style={styles.mapContainer}>
-            <MapView
-              provider={mapProvider}
+            <OpenStreetMap
               style={StyleSheet.absoluteFillObject}
               initialRegion={NEPAL_REGION}
-              minZoomLevel={6}
-              maxZoomLevel={18}
-              mapType="standard"
-              loadingEnabled
-              showsCompass
-            >
-              {/* clusters */}
-              {clusters.map((cluster, i) => {
-                const center = {
-                  latitude:
-                    cluster.reduce((sum, r) => sum + r.location.latitude, 0) /
-                    cluster.length,
-                  longitude:
-                    cluster.reduce((sum, r) => sum + r.location.longitude, 0) /
-                    cluster.length,
-                };
-                return (
-                  <Circle
-                    key={`cluster-${i}`}
-                    center={center}
-                    radius={cluster.length * 800}
-                    strokeColor="#ff000080"
-                    fillColor="#ff000020"
-                    strokeWidth={2}
-                  />
-                );
-              })}
-              {/* report markers */}
-              {validReports.map((report) => {
-                const markerColor = getColorForViolation(report.violation);
-                return (
-                  <View key={report._id}>
-                    <Circle
-                      center={{
-                        latitude: report.location.latitude,
-                        longitude: report.location.longitude,
-                      }}
-                      radius={500}
-                      zIndex={2}
-                      strokeColor={markerColor}
-                      fillColor={`${markerColor}40`}
-                      strokeWidth={2}
-                    />
-                    <Marker
-                      coordinate={{
-                        latitude: report.location.latitude,
-                        longitude: report.location.longitude,
-                      }}
-                      pinColor={markerColor}
-                    >
-                      <Callout tooltip={true}>
-                        <View style={styles.bubble}>
-                          {/* Header */}
-                          <View style={styles.bubbleHeader}>
-                            <Text style={styles.plateText}>
-                              {report.number_plate.toUpperCase()}
-                            </Text>
-                            <View
-                              style={[
-                                styles.statusBadge,
-                                {
-                                  backgroundColor:
-                                    report.status === "approved"
-                                      ? "#d4edda"
-                                      : report.status === "rejected"
-                                        ? "#f8d7da"
-                                        : "#fff3cd",
-                                },
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.statusText,
-                                  {
-                                    color:
-                                      report.status === "approved"
-                                        ? "#155724"
-                                        : report.status === "rejected"
-                                          ? "#721c24"
-                                          : "#856404",
-                                  },
-                                ]}
-                              >
-                                {report.status.toUpperCase()}
-                              </Text>
-                            </View>
-                          </View>
-
-                          {/* Divider */}
-                          <View style={styles.bubbleDivider} />
-
-                          {/* Violation */}
-                          <View style={styles.bubbleRow}>
-                            <View
-                              style={[
-                                styles.violationDot,
-                                { backgroundColor: markerColor },
-                              ]}
-                            />
-                            <Text style={styles.violationText}>
-                              {report.violation.replace(/_/g, " ")}
-                            </Text>
-                          </View>
-
-                          {/* Location */}
-                          <Text style={styles.locationText} numberOfLines={2}>
-                            📍 {report.location?.name ?? "Unknown"}
-                          </Text>
-
-                          {/* Date */}
-                          <Text style={styles.dateText}>
-                            🗓 {new Date(report.createdAt).toLocaleDateString()}
-                          </Text>
-
-                          {/* Arrow */}
-                          <View style={styles.bubbleArrow} />
-                        </View>
-                      </Callout>
-                    </Marker>
-                  </View>
-                );
-              })}
-            </MapView>
+              markers={mapMarkers}
+              circles={mapCircles}
+            />
 
             <View style={styles.legendsContainer}>
               <View style={styles.legendCard}>
@@ -296,21 +258,33 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
+  mapLoadingOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#e5e7eb",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+    gap: 12,
+  },
   legendsContainer: {
     position: "absolute",
-    top: 16,
+    bottom: 0,
     left: 16,
     right: 16,
   },
   legendCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    // backgroundColor: "rgba(255, 255, 255, 0.95)",
     padding: 16,
     borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.15,
+    // shadowRadius: 8,
+    // elevation: 4,
   },
   legendTitle: {
     fontSize: 14,

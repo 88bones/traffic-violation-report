@@ -17,7 +17,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MapView, { Marker, Region } from "react-native-maps";
+import OpenStreetMap from "@/components/OpenStreetMap";
 import { useLocation, NEPAL_REGION } from "@/hooks/useLocation";
 import { useUpdateReportForm } from "@/hooks/useUpdateReportForm";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -41,7 +41,7 @@ export default function UpdateScreen() {
     pin,
     locationName,
     mapView,
-    mapRef,
+    region,
     handleSearch,
     selectLocation,
     onRegionChangeComplete,
@@ -162,22 +162,23 @@ export default function UpdateScreen() {
 
           {mapView && (
             <View style={styles.mapContainer}>
-              <MapView
-                ref={mapRef}
+              <OpenStreetMap
                 style={styles.map}
                 initialRegion={NEPAL_REGION}
-                minZoomLevel={6}
-                maxZoomLevel={15}
+                region={region}
                 onRegionChangeComplete={onRegionChangeComplete}
-              >
-                {pin && (
-                  <Marker
-                    coordinate={pin}
-                    title="Violation Location"
-                    pinColor="red"
-                  />
-                )}
-              </MapView>
+                markers={
+                  pin
+                    ? [
+                        {
+                          coordinate: pin,
+                          title: "Violation Location",
+                          color: "#dc2626",
+                        },
+                      ]
+                    : []
+                }
+              />
             </View>
           )}
           <TouchableOpacity

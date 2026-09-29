@@ -1,29 +1,72 @@
-import os
+"""Nepali License Plate OCR Service.
+
+Supports both:
+1. Segmentation-Free CRNN (CNN + BiLSTM + CTC) when `models/nepali_plate_crnn.keras` is trained.
+2. Segment-then-Classify CNN fallback using `models/nepali_plate_ocr.keras` when CRNN weights are not yet generated.
+"""
+
 import json
+import os
 import cv2
 import numpy as np
 import tensorflow as tf
 
-# Setup relative directory resolution
+from crnn_model import build_crnn_model, CTCDecoder
+
+# Setup directory paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(BASE_DIR, "debug_out")
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_ocr.keras")
+CRNN_MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_crnn.keras")
+LEGACY_MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_ocr.keras")
 CLASSES_PATH = os.path.join(MODEL_DIR, "class_names.json")
+
 NEPALI_DIGIT_TRANSLATION = str.maketrans("०१२३४५६७८९", "0123456789")
 
-# Load model and class names with absolute paths
-model = tf.keras.models.load_model(MODEL_PATH)
+# Load vocabulary
 with open(CLASSES_PATH, "r", encoding="utf-8") as f:
     class_names = json.load(f)
 
-print("Loaded OCR Model successfully. Classes:", class_names)
+decoder = CTCDecoder(class_names)
+num_classes = len(class_names)
+
+# Model loading logic
+crnn_model = None
+legacy_cnn_model = None
+active_mode = None
+
+if os.path.exists(CRNN_MODEL_PATH):
+    try:
+        crnn_model = tf.keras.models.load_model(CRNN_MODEL_PATH, compile=False)
+        active_mode = "CRNN"
+        print(f"Loaded trained CRNN Model successfully from {CRNN_MODEL_PATH}")
+    except Exception as e:
+        print(f"Error loading CRNN model: {e}")
+
+if crnn_model is None and os.path.exists(LEGACY_MODEL_PATH):
+    try:
+        legacy_cnn_model = tf.keras.models.load_model(LEGACY_MODEL_PATH)
+        active_mode = "CNN_FALLBACK"
+        print(
+            f"Note: Using trained CNN character model ({LEGACY_MODEL_PATH}).\n"
+            f"      To switch to CRNN, run 'python train.py' to train and generate 'nepali_plate_crnn.keras'."
+        )
+    except Exception as e:
+        print(f"Error loading legacy CNN model: {e}")
+
+if crnn_model is None and legacy_cnn_model is None:
+    # Build un-trained CRNN architecture as stub
+    crnn_model, _ = build_crnn_model(
+        img_height=64, img_width=256, num_classes=num_classes
+    )
+    active_mode = "CRNN_UNTRAINED"
+    print("Warning: No trained weights found on disk. CRNN initialized with random weights.")
 
 
 def locate_and_deskew_plate(img, debug_prefix=None):
-    """Find the largest red blob in the image, deskew it to axis-aligned, return crop."""
+    """Find the largest red/embossed plate region, deskew to axis-aligned orientation, and return crop."""
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     lower1, upper1 = np.array([0, 70, 50]), np.array([10, 255, 255])
     lower2, upper2 = np.array([170, 70, 50]), np.array([180, 255, 255])
@@ -80,6 +123,42 @@ def locate_and_deskew_plate(img, debug_prefix=None):
     return plate_crop, rect
 
 
+# ----------------------------------------------------------------------
+# Segmentation-Free CRNN Inference Pipeline
+# ----------------------------------------------------------------------
+def preprocess_plate_for_crnn(plate_crop, target_size=(256, 64)):
+    """Preprocess the whole plate crop directly for CRNN sequence recognition."""
+    if len(plate_crop.shape) == 3:
+        gray = cv2.cvtColor(plate_crop, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = plate_crop
+
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    gray = clahe.apply(gray)
+    resized = cv2.resize(gray, target_size)
+    normalized = (resized.astype(np.float32) / 127.5) - 1.0
+    tensor = np.expand_dims(normalized, axis=(0, -1))  # (1, 64, 256, 1)
+    return tensor, resized
+
+
+def _predict_crnn(plate_crop, debug_prefix=None):
+    input_tensor, debug_resized = preprocess_plate_for_crnn(plate_crop)
+
+    if debug_prefix:
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_04_crnn_input.png"), debug_resized)
+
+    preds = crnn_model.predict(input_tensor, verbose=0)
+    decoded_results = decoder.decode_greedy(preds)
+    raw_text, confidence, _ = decoded_results[0]
+    confidence_pct = confidence * 100.0
+
+    print(f"[CRNN-CTC] Decoded: '{raw_text}' | Confidence: {confidence_pct:.1f}%")
+    return raw_text.translate(NEPALI_DIGIT_TRANSLATION)
+
+
+# ----------------------------------------------------------------------
+# Segment-then-Classify Fallback Pipeline (using trained CNN)
+# ----------------------------------------------------------------------
 def preprocess_char(char_img):
     char_img = cv2.resize(char_img, (48, 48))
     char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
@@ -87,31 +166,26 @@ def preprocess_char(char_img):
     return char_img
 
 
-def preprocess_plate(img):
+def preprocess_plate_legacy(img):
     img = cv2.resize(img, (400, 200))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8, 8))
     gray = clahe.apply(gray)
-    # Reduced denoising strength to preserve character edges
     gray = cv2.fastNlMeansDenoising(gray, h=7)
     return gray, img
 
 
 def auto_threshold(gray):
-    """Pick binary polarity so the FOREGROUND (text) is the minority of pixels."""
     _, t_normal = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     _, t_inv = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
     if np.sum(t_normal == 255) <= np.sum(t_inv == 255):
         return t_normal
     return t_inv
 
 
 def segment_characters(plate_img, debug_prefix=None):
-    gray, resized = preprocess_plate(plate_img)
-
+    gray, resized = preprocess_plate_legacy(plate_img)
     thresh = auto_threshold(gray)
-
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
 
@@ -119,13 +193,10 @@ def segment_characters(plate_img, debug_prefix=None):
         cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_04_thresh.png"), thresh)
 
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
     h_img, w_img = thresh.shape
     char_contours = []
     edge_margin = int(w_img * 0.02)
-
-    # Improved character filtering with relative thresholds
-    min_area = h_img * w_img * 0.005  # Relative to image size
+    min_area = h_img * w_img * 0.005
     max_area = h_img * w_img * 0.25
 
     for cnt in contours:
@@ -137,19 +208,17 @@ def segment_characters(plate_img, debug_prefix=None):
         touches_edge = (x <= edge_margin or (x + w) >= (w_img - edge_margin))
         near_circular = 0.75 < (w / h if h > 0 else 0) < 1.35 and solidity > 0.75
 
-        if (area > min_area and
-            area < max_area and
-            aspect_ratio > 0.5 and  # More lenient aspect ratio
-            aspect_ratio < 4.0 and  # Upper bound for aspect ratio
-            w > w_img * 0.04 and  # Slightly relaxed minimum width
-            w < w_img * 0.35 and
-            h > h_img * 0.2 and  # Adjusted height constraints
-            h < h_img * 0.95 and
-            solidity > 0.3 and  # Minimum solidity check
-            not (touches_edge and near_circular)):
+        if (
+            area > min_area
+            and area < max_area
+            and 0.5 < aspect_ratio < 4.0
+            and w_img * 0.04 < w < w_img * 0.35
+            and h_img * 0.2 < h < h_img * 0.95
+            and solidity > 0.3
+            and not (touches_edge and near_circular)
+        ):
             char_contours.append((x, y, w, h))
 
-    # Dynamic row sorting threshold (based on resized image height)
     row_threshold = h_img * 0.35
     char_contours = sorted(char_contours, key=lambda c: (int(c[1] // row_threshold), c[0]))
 
@@ -162,34 +231,9 @@ def segment_characters(plate_img, debug_prefix=None):
     return char_contours, resized
 
 
-def read_plate(image_path, debug_prefix=None, crop_top_frac=0.25, min_confidence=55):
-    """
-    Read license plate from image with improved accuracy.
-
-    Args:
-        image_path: Path to input image
-        debug_prefix: Optional prefix for debug output files
-        crop_top_frac: Fraction to crop from top (default 0.25, reduced from 0.30)
-        min_confidence: Minimum confidence threshold for character recognition (default 55%)
-    """
-    img = cv2.imread(image_path)
-    if img is None:
-        print(f"Could not read {image_path}")
-        return ""
-
-    plate, _ = locate_and_deskew_plate(img, debug_prefix=debug_prefix)
-    if plate is None:
-        print("No plate located, falling back to full image")
-        plate = img
-
-    h = plate.shape[0]
-    plate_lower = plate[int(h * crop_top_frac):, :]
-
-    if debug_prefix:
-        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_03b_lower_crop.png"), plate_lower)
-
-    char_contours, resized = segment_characters(plate_lower, debug_prefix=debug_prefix)
-    print(f"Found {len(char_contours)} character candidates")
+def _predict_legacy_cnn(plate_roi, debug_prefix=None, min_confidence=50):
+    char_contours, resized = segment_characters(plate_roi, debug_prefix=debug_prefix)
+    print(f"[CNN-Classifier] Segmented {len(char_contours)} character candidates")
 
     plate_text = ""
     char_confidences = []
@@ -203,29 +247,51 @@ def read_plate(image_path, debug_prefix=None, crop_top_frac=0.25, min_confidence
 
         char_img = resized[y1:y2, x1:x2]
         processed = preprocess_char(char_img)
-        predictions = model.predict(processed, verbose=0)
+        predictions = legacy_cnn_model.predict(processed, verbose=0)
         predicted_class = class_names[np.argmax(predictions[0])]
-        confidence = np.max(predictions[0]) * 100
+        confidence = float(np.max(predictions[0]) * 100)
 
         print(f"  Char {idx+1}: {predicted_class} ({confidence:.1f}%)")
 
-        # Higher confidence threshold for better accuracy
         if confidence >= min_confidence:
             plate_text += predicted_class
             char_confidences.append(confidence)
-        else:
-            print(f"    -> Rejected (confidence {confidence:.1f}% < {min_confidence}%)")
 
     result = plate_text.translate(NEPALI_DIGIT_TRANSLATION)
-
-    # Log overall statistics
-    if char_confidences:
-        avg_conf = sum(char_confidences) / len(char_confidences)
-        print(f"Accepted {len(char_confidences)}/{len(char_contours)} characters, avg confidence: {avg_conf:.1f}%")
-    else:
-        print("No characters met confidence threshold")
-
     return result
+
+
+# ----------------------------------------------------------------------
+# Main Public Interface
+# ----------------------------------------------------------------------
+def read_plate(image_path, debug_prefix=None, crop_top_frac=0.25, min_confidence=50):
+    """Read license plate text from image.
+
+    Uses CRNN when trained model weights exist; otherwise uses trained CNN character model.
+    """
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"Could not read {image_path}")
+        return ""
+
+    plate, _ = locate_and_deskew_plate(img, debug_prefix=debug_prefix)
+    if plate is None:
+        print("No plate located, using full image.")
+        plate = img
+
+    h = plate.shape[0]
+    plate_roi = plate[int(h * crop_top_frac):, :] if (crop_top_frac > 0 and h > 50) else plate
+
+    if debug_prefix:
+        cv2.imwrite(os.path.join(OUT_DIR, f"{debug_prefix}_03b_roi.png"), plate_roi)
+
+    if active_mode == "CRNN":
+        return _predict_crnn(plate_roi, debug_prefix=debug_prefix)
+    elif active_mode == "CNN_FALLBACK":
+        return _predict_legacy_cnn(plate_roi, debug_prefix=debug_prefix, min_confidence=min_confidence)
+    else:
+        # Untrained CRNN fallback
+        return _predict_crnn(plate_roi, debug_prefix=debug_prefix)
 
 
 if __name__ == "__main__":

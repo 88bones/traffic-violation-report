@@ -1,11 +1,12 @@
 import { MapContainer, TileLayer, Marker, Popup, Circle } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useQuery } from "@tanstack/react-query";
 import { useAppSelector } from "@/redux/hooks";
 import { getReports } from "@/services/reportService";
 import { useMemo } from "react";
-import { dbscan } from "@/utils/algorithm";
+import { dbscan, haversineDistance } from "@/utils/algorithm";
 import type { Report } from "@/types/types";
 
 // leaflet icon paths
@@ -37,6 +38,18 @@ const LEGENDS = [
   { label: "Speeding", value: "speeding", color: "#2563eb" },
 ];
 
+const MIN_CLUSTER_RADIUS_M = 300;
+// Opacity floor/step so cluster fill intensity communicates report density
+const MIN_CLUSTER_OPACITY = 0.15;
+const OPACITY_STEP_PER_REPORT = 0.05;
+const MAX_CLUSTER_OPACITY = 0.5;
+
+const clusterOpacity = (reportCount: number) =>
+  Math.min(
+    MIN_CLUSTER_OPACITY + reportCount * OPACITY_STEP_PER_REPORT,
+    MAX_CLUSTER_OPACITY,
+  );
+
 const Hotspot = () => {
   const { token } = useAppSelector((state) => state.auth);
 
@@ -47,7 +60,6 @@ const Hotspot = () => {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Filter valid reports memoized
   const validReports: Report[] = useMemo(() => {
     return (reports ?? []).filter(
       (r) => r.location?.latitude && r.location?.longitude,
@@ -56,7 +68,7 @@ const Hotspot = () => {
 
   const clusters = useMemo(() => {
     if (!validReports.length) return [];
-    const { clusters: calculatedClusters } = dbscan(validReports, 5, 2);
+    const { clusters: calculatedClusters } = dbscan(validReports, 0.5, 3);
     return calculatedClusters || [];
   }, [validReports]);
 
@@ -94,7 +106,7 @@ const Hotspot = () => {
             attribution="&copy; OpenStreetMap contributors"
           />
 
-          {/* clusters*/}
+          {/* clusters */}
           {clusters.map((cluster, i) => {
             if (!cluster.length) return null;
 
@@ -105,34 +117,57 @@ const Hotspot = () => {
               cluster.reduce((sum, r) => sum + r.location.longitude, 0) /
               cluster.length;
 
+            const maxDistKm = Math.max(
+              ...cluster.map((r) =>
+                haversineDistance(
+                  avgLat,
+                  avgLng,
+                  r.location.latitude,
+                  r.location.longitude,
+                ),
+              ),
+            );
+            const radius = Math.max(maxDistKm * 1000, MIN_CLUSTER_RADIUS_M);
+
             return (
               <Circle
                 key={`cluster-${i}`}
                 center={[avgLat, avgLng]}
-                radius={cluster.length * 800}
+                radius={radius}
                 pathOptions={{
                   color: "#ff0000",
                   fillColor: "#ff0000",
-                  fillOpacity: 0.2,
+                  fillOpacity: clusterOpacity(cluster.length),
                   weight: 2,
                 }}
               />
             );
           })}
 
-          {/* individual reports */}
+          {/* individual report circles (violation-colored, stays as-is) */}
           {validReports.map((report) => (
-            <div key={report._id}>
-              <Circle
-                center={[report.location.latitude, report.location.longitude]}
-                radius={500}
-                pathOptions={{
-                  color: violationColor(report.violation),
-                  fillColor: violationColor(report.violation),
-                  fillOpacity: 0.4,
-                }}
-              />
+            <Circle
+              key={`circle-${report._id}`}
+              center={[report.location.latitude, report.location.longitude]}
+              radius={500}
+              pathOptions={{
+                color: violationColor(report.violation),
+                fillColor: violationColor(report.violation),
+                fillOpacity: 0.4,
+              }}
+            />
+          ))}
+
+          {/* reports doesnt overlap  */}
+          <MarkerClusterGroup
+            chunkedLoading
+            spiderfyOnMaxZoom
+            showCoverageOnHover={false}
+            maxClusterRadius={40}
+          >
+            {validReports.map((report) => (
               <Marker
+                key={`marker-${report._id}`}
                 position={[report.location.latitude, report.location.longitude]}
               >
                 <Popup>
@@ -166,13 +201,14 @@ const Hotspot = () => {
                   </div>
                 </Popup>
               </Marker>
-            </div>
-          ))}
+            ))}
+          </MarkerClusterGroup>
         </MapContainer>
       </div>
 
       <p className="text-sm text-muted-foreground">
         Showing {validReports.length} reports
+        {clusters.length > 0 && ` and ${clusters.length} clusters`}
       </p>
     </div>
   );

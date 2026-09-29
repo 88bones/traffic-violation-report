@@ -5,7 +5,7 @@ import traceback
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from predict import read_plate
+from predict import read_plate, active_mode
 
 app = Flask(__name__)
 CORS(app)
@@ -22,7 +22,11 @@ def allowed_file(filename):
 
 @app.route("/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok"}), 200
+    return jsonify({
+        "status": "ok",
+        "active_mode": active_mode,
+        "crnn_trained": active_mode == "CRNN",
+    }), 200
 
 
 @app.route("/predict", methods=["POST"])
@@ -39,7 +43,7 @@ def predict():
 
     # Optional parameters with defaults
     crop_top = float(request.form.get("crop_top_frac", 0.25))
-    min_confidence = int(request.form.get("min_confidence", 55))
+    min_confidence = int(request.form.get("min_confidence", 40))
     debug = request.form.get("debug", "false").lower() == "true"
 
     ext = file.filename.rsplit(".", 1)[1].lower()
@@ -63,6 +67,7 @@ def predict():
             "success": True,
             "plate_text": plate_text,
             "processing_time_sec": round(elapsed, 3),
+            "model_mode": active_mode,
             "params": {
                 "crop_top_frac": crop_top,
                 "min_confidence": min_confidence

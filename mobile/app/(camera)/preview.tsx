@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { Violation, Report } from "@/types/types";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import MapView, { Marker, Region, UrlTile } from "react-native-maps";
+import OpenStreetMap from "@/components/OpenStreetMap";
 import { useLocation, NEPAL_REGION } from "@/hooks/useLocation";
 import Constants from "expo-constants";
 import { useReportForm } from "@/hooks/useReportForm";
@@ -38,7 +38,7 @@ export default function PreviewScreen() {
     pin,
     locationName,
     mapView,
-    mapRef,
+    region,
     handleSearch,
     selectLocation,
     onRegionChangeComplete,
@@ -180,30 +180,25 @@ export default function PreviewScreen() {
             </View>
           )}
 
-          {Platform.OS === "ios" && mapView && (
+          {mapView && (
             <View style={styles.mapContainer}>
-              <MapView
-                ref={mapRef}
+              <OpenStreetMap
                 style={styles.map}
                 initialRegion={NEPAL_REGION}
-                minZoomLevel={6}
-                maxZoomLevel={15}
+                region={region}
                 onRegionChangeComplete={onRegionChangeComplete}
-                // mapType="none"
-              >
-                {/* <UrlTile
-                  urlTemplate="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  maximumZ={19}
-                  flipY={false}
-                /> */}
-                {pin && (
-                  <Marker
-                    coordinate={pin}
-                    title="Violation Location"
-                    pinColor="red"
-                  />
-                )}
-              </MapView>
+                markers={
+                  pin
+                    ? [
+                        {
+                          coordinate: pin,
+                          title: "Violation Location",
+                          color: "#dc2626",
+                        },
+                      ]
+                    : []
+                }
+              />
             </View>
           )}
 

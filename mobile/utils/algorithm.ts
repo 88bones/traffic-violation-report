@@ -28,7 +28,6 @@ export const dbscan = (reports: Report[], epsilon: number, minPts: number) => {
   const getNeighbours = (report: Report) =>
     reports.filter(
       (r) =>
-        r._id !== report._id &&
         haversineDistance(
           report.location.latitude,
           report.location.longitude,
@@ -69,6 +68,6 @@ export const dbscan = (reports: Report[], epsilon: number, minPts: number) => {
   }
   return {
     clusters,
-    noise: reports.filter((r) => noise.has(r._id)),
+    noise: reports.filter((r) => noise.has(r._id) && !clusterMap.has(r._id)),
   };
 };
