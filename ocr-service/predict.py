@@ -23,8 +23,6 @@ CRNN_MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_crnn.keras")
 LEGACY_MODEL_PATH = os.path.join(MODEL_DIR, "nepali_plate_ocr.keras")
 CLASSES_PATH = os.path.join(MODEL_DIR, "class_names.json")
 
-NEPALI_DIGIT_TRANSLATION = str.maketrans("०१२३४५६७८९", "0123456789")
-
 # Load vocabulary
 with open(CLASSES_PATH, "r", encoding="utf-8") as f:
     class_names = json.load(f)
@@ -153,7 +151,7 @@ def _predict_crnn(plate_crop, debug_prefix=None):
     confidence_pct = confidence * 100.0
 
     print(f"[CRNN-CTC] Decoded: '{raw_text}' | Confidence: {confidence_pct:.1f}%")
-    return raw_text.translate(NEPALI_DIGIT_TRANSLATION)
+    return raw_text
 
 
 # ----------------------------------------------------------------------
@@ -257,8 +255,7 @@ def _predict_legacy_cnn(plate_roi, debug_prefix=None, min_confidence=50):
             plate_text += predicted_class
             char_confidences.append(confidence)
 
-    result = plate_text.translate(NEPALI_DIGIT_TRANSLATION)
-    return result
+    return plate_text
 
 
 # ----------------------------------------------------------------------

@@ -35,7 +35,7 @@ const DashBoard = () => {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">DashBoARD</h1>
+      <h1 className="text-2xl font-bold">DashBoard</h1>
       {isLocating && <p>Getting location...</p>}
       {locationName && <p>{locationName.split("-")[0].trim()}</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
